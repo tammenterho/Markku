@@ -1,0 +1,61 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+@Entity('campaigns') // tietokantataulun nimi
+export class Campaign {
+  @PrimaryGeneratedColumn('uuid')
+  id: string; // automaattisesti generoitu UUID
+
+  @Column({ type: 'varchar', length: 255 })
+  clientId: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  companyId: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  company: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  customer: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  name: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  title: string;
+
+  @Column({ type: 'text', nullable: true })
+  copyText: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  targetAge: string;
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  targetArea: string;
+
+  @Column({ type: 'numeric', default: 0 })
+  budget: number;
+
+  @Column({ type: 'date', nullable: true })
+  start: Date;
+
+  @Column({ type: 'date', nullable: true })
+  end: Date;
+
+  @Column({ type: 'varchar', length: 50, default: 'draft' })
+  status: string;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  type: string;
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
