@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import { CampaignsService } from './campaigns.service';
 import { Campaign } from './campaign.entity';
 
@@ -9,5 +9,12 @@ export class CampaignsController {
   @Get()
   async findAll(): Promise<Campaign[]> {
     return this.campaignsService.findAll();
+  }
+
+  @Post()
+  create(@Body() campaign: Partial<Campaign>) {
+    console.log('CREATING');
+
+    return this.campaignsService.create(campaign);
   }
 }

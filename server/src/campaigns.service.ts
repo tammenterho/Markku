@@ -15,6 +15,7 @@ export class CampaignsService {
     if (!AppDataSource.isInitialized) {
       await AppDataSource.initialize();
     }
+    console.log('CREATING1');
     return AppDataSource.getRepository(Campaign).save(campaignData);
   }
 }
