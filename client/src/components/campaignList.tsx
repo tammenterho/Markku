@@ -1,6 +1,13 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Table, Container, Loader, Text, TextInput, Group } from "@mantine/core";
+import {
+  Table,
+  Container,
+  Loader,
+  Text,
+  TextInput,
+  Group,
+} from "@mantine/core";
 import {
   IconCircleCheck,
   IconCircleMinus,
@@ -91,13 +98,15 @@ export const CampaignList = () => {
   const sortedCampaigns = [...filteredCampaigns].sort((a, b) => {
     if (!sortKey) return 0;
 
-    let aValue = a[sortKey];
-    let bValue = b[sortKey];
+    const aValue = a[sortKey];
+    const bValue = b[sortKey];
 
     // Handle budget as numerical sorting
     if (sortKey === "budget") {
-      const aNum = typeof aValue === "string" ? parseFloat(aValue) : Number(aValue);
-      const bNum = typeof bValue === "string" ? parseFloat(bValue) : Number(bValue);
+      const aNum =
+        typeof aValue === "string" ? parseFloat(aValue) : Number(aValue);
+      const bNum =
+        typeof bValue === "string" ? parseFloat(bValue) : Number(bValue);
       return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
     }
 
@@ -114,7 +123,13 @@ export const CampaignList = () => {
     return 0;
   });
 
-  const SortableHeader = ({ label, sortBy }: { label: string; sortBy: SortKey }) => (
+  const SortableHeader = ({
+    label,
+    sortBy,
+  }: {
+    label: string;
+    sortBy: SortKey;
+  }) => (
     <Table.Th
       onClick={() => handleSort(sortBy)}
       style={{ cursor: "pointer", userSelect: "none" }}
