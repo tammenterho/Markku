@@ -7,6 +7,7 @@ import {
   Text,
   TextInput,
   Group,
+  Button,
 } from "@mantine/core";
 import {
   IconCircleCheck,
@@ -14,16 +15,20 @@ import {
   IconSearch,
   IconChevronUp,
   IconChevronDown,
+  IconTrash,
 } from "@tabler/icons-react";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
+import classes from "./campaignList.module.css";
 
 type SortKey = keyof CampaignType | null;
 type SortDirection = "asc" | "desc";
+type FilterType = "all" | "past" | "current" | "future";
 
 export const CampaignList = () => {
   const [campaigns, setCampaigns] = useState<CampaignType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [filter, setFilter] = useState<FilterType>("all");
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [selectedCampaign, setSelectedCampaign] = useState<CampaignType | null>(
@@ -67,7 +72,7 @@ export const CampaignList = () => {
     );
   }
 
-  const filteredCampaigns = campaigns.filter((campaign) => {
+  const searchedCampaigns = campaigns.filter((campaign) => {
     const query = searchQuery.toLowerCase();
     return (
       campaign.company.toLowerCase().includes(query) ||
@@ -76,6 +81,27 @@ export const CampaignList = () => {
       campaign.customer.toLowerCase().includes(query) ||
       campaign.type.toLowerCase().includes(query)
     );
+  });
+
+  const filteredCampaigns = searchedCampaigns.filter((campaign) => {
+    if (filter === "all") {
+      return true;
+    }
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const start = new Date(campaign.start);
+    const end = new Date(campaign.end);
+
+    switch (filter) {
+      case "past":
+        return end < now;
+      case "current":
+        return start <= now && end >= now;
+      case "future":
+        return start > now;
+      default:
+        return true;
+    }
   });
 
   const handleStatusUpdate = async (
@@ -96,6 +122,18 @@ export const CampaignList = () => {
       );
     } catch (error) {
       console.error("Error updating status:", error);
+    }
+  };
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (window.confirm("Haluatko varmasti poistaa tämän kampanjan?")) {
+      try {
+        await axios.delete(`http://localhost:3000/campaigns/${id}`);
+        setCampaigns(campaigns.filter((c) => c.id !== id));
+      } catch (error) {
+        console.error("Error deleting campaign:", error);
+      }
     }
   };
 
@@ -183,12 +221,44 @@ export const CampaignList = () => {
           )}
         </div>
       </Table.Td>
+      <Table.Td>
+        <IconTrash
+          className={classes.trashIcon}
+          onClick={(e) => handleDelete(e, campaign.id)}
+        />
+      </Table.Td>
     </Table.Tr>
   ));
 
   return (
     <div style={{ width: "100%" }}>
       <h1>Kampanjat</h1>
+      <Group mb="md">
+        <Button
+          variant={filter === "all" ? "filled" : "outline"}
+          onClick={() => setFilter("all")}
+        >
+          Kaikki
+        </Button>
+        <Button
+          variant={filter === "past" ? "filled" : "outline"}
+          onClick={() => setFilter("past")}
+        >
+          Menneet
+        </Button>
+        <Button
+          variant={filter === "current" ? "filled" : "outline"}
+          onClick={() => setFilter("current")}
+        >
+          Käynnissä
+        </Button>
+        <Button
+          variant={filter === "future" ? "filled" : "outline"}
+          onClick={() => setFilter("future")}
+        >
+          Tulevat
+        </Button>
+      </Group>
       <TextInput
         placeholder="Hae kampanjaa..."
         leftSection={<IconSearch />}
@@ -216,6 +286,7 @@ export const CampaignList = () => {
               <SortableHeader label="Budjetti" sortBy="budget" />
               <SortableHeader label="Tyyppi" sortBy="type" />
               <Table.Th>Tila</Table.Th>
+              <Table.Th>Poista</Table.Th>
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>{rows}</Table.Tbody>

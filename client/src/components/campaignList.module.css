@@ -1,0 +1,6 @@
+.trashIcon {
+  cursor: pointer;
+}
+.trashIcon:hover {
+  color: red;
+}
