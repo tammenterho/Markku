@@ -13,6 +13,10 @@ const Navbar = () => {
         label="Kampanjat"
         onClick={() => navigate("/campaign")}
       />
+      <NavLink
+        label="Luo Uusi"
+        onClick={() => navigate("/new")}
+      />
     </AppShell.Navbar>
   );
 };
