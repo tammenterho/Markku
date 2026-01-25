@@ -1,6 +1,10 @@
 import { AppShell, NavLink } from "@mantine/core";
 import { useNavigate } from "react-router-dom";
-import { IconCirclePlusFilled } from "@tabler/icons-react";
+import {
+  IconCirclePlus,
+  IconCalendarEvent,
+  IconSettings,
+} from "@tabler/icons-react";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -10,16 +14,21 @@ const Navbar = () => {
         label="Luo Uusi"
         onClick={() => navigate("/new")}
         leftSection={
-          <IconCirclePlusFilled
-            size={36} // set custom `width` and `height`
+          <IconCirclePlus
             color="green" // set `stroke` color
-            stroke={3} // set `stroke-width`
-            strokeLinejoin="miter" // override other SVG props
           />
         }
       />
-      <NavLink label="Koti" onClick={() => navigate("/")} />
-      <NavLink label="Kampanjat" onClick={() => navigate("/campaign")} />
+      <NavLink
+        label="Kampanjat"
+        onClick={() => navigate("/campaign")}
+        leftSection={<IconCalendarEvent />}
+      />
+      <NavLink
+        label="Asetukset"
+        onClick={() => navigate("/settings")}
+        leftSection={<IconSettings />}
+      />
     </AppShell.Navbar>
   );
 };
