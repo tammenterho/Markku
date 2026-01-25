@@ -20,26 +20,37 @@ interface Campaign {
 }
 
 export const CampaignList = () => {
-  const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
 
   useEffect(() => {
     axios
       .get("http://localhost:3000/campaigns")
-      .then((response) => setCampaign(response.data))
+      .then((response) => setCampaigns(response.data))
       .catch((error) => console.error("Error fetching campaigns:", error));
   }, []);
 
-  if (!campaign) {
+  if (campaigns.length === 0) {
     return <div>Loading campaigns...</div>;
   }
 
   return (
     <div>
       <h2>Campaign List</h2>
-      <h3>{campaign.name}</h3>
-      <p>Company: {campaign.company}</p>
-      <p>Title: {campaign.title}</p>
-      <p>Budget: {campaign.budget}€</p>
+      {campaigns.map((campaign) => (
+        <div
+          key={campaign.id}
+          style={{
+            border: "1px solid #ccc",
+            padding: "10px",
+            marginBottom: "10px",
+          }}
+        >
+          <h3>{campaign.name}</h3>
+          <p>Company: {campaign.company}</p>
+          <p>Title: {campaign.title}</p>
+          <p>Budget: {campaign.budget}€</p>
+        </div>
+      ))}
     </div>
   );
 };
