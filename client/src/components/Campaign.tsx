@@ -1,8 +1,6 @@
 import {
   Modal,
   Stack,
-  Text,
-  Badge,
   TextInput,
   Textarea,
   Button,
