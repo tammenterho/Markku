@@ -10,4 +10,11 @@ export class CampaignsService {
     }
     return AppDataSource.manager.find(Campaign);
   }
+
+  async create(campaignData: Partial<Campaign>): Promise<Campaign> {
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
+    return AppDataSource.getRepository(Campaign).save(campaignData);
+  }
 }

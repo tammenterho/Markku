@@ -1,8 +1,23 @@
-import { Button, Group, Radio, Select, TextInput, Title } from "@mantine/core";
+import {
+  Button,
+  Flex,
+  Group,
+  Radio,
+  Select,
+  Textarea,
+  TextInput,
+  Title,
+} from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { DatePickerInput } from "@mantine/dates";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import {
+  IconAd,
+  IconBuilding,
+  IconBuildingSkyscraper,
+  IconTargetArrow,
+} from "@tabler/icons-react";
 
 const companyData = ["Yritys A", "Yritys B", "Yritys C"];
 
@@ -57,19 +72,32 @@ const CreateCampaign = () => {
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}>
       <Title>Luo Uusi</Title>
-      <h2>General</h2>
+      <h2>
+        <Flex align="center" gap="xs">
+          General
+          <IconBuildingSkyscraper color="#854d97" />
+        </Flex>
+      </h2>
       <Select
+        w={"38rem"}
         label="Company"
         placeholder="Valitse yritys"
         data={companyData}
         {...form.getInputProps("company")}
       />
-      <TextInput label="Name" {...form.getInputProps("name")} />
+      <TextInput w={"38rem"} label="Name" {...form.getInputProps("name")} />
       <Group>
-        <TextInput label="Payer" {...form.getInputProps("payer")} />
         <TextInput
+          miw="200px"
+          label="Payer"
+          labelProps={{ style: { whiteSpace: "nowrap" } }}
+          {...form.getInputProps("payer")}
+        />
+        <TextInput
+          miw="200px"
           label="Budget"
           type="number"
+          labelProps={{ style: { whiteSpace: "nowrap" } }}
           {...form.getInputProps("budget")}
         />
         <Radio.Group
@@ -85,27 +113,62 @@ const CreateCampaign = () => {
       </Group>
       <Group>
         <DatePickerInput
+          miw="200px"
           label="Start date"
+          labelProps={{ style: { whiteSpace: "nowrap" } }}
           {...form.getInputProps("startDate")}
         />
-        <DatePickerInput label="End date" {...form.getInputProps("endDate")} />
+        <DatePickerInput
+          miw="200px"
+          label="End date"
+          labelProps={{ style: { whiteSpace: "nowrap" } }}
+          {...form.getInputProps("endDate")}
+        />
       </Group>
-      <h2>Target</h2>
+      <h2>
+        <Flex align="center" gap="xs">
+          Target
+          <IconTargetArrow color="#854d97" />
+        </Flex>
+      </h2>
+      <Group>
+        <TextInput
+          label="Target area"
+          labelProps={{ style: { whiteSpace: "nowrap" } }}
+          {...form.getInputProps("targetArea")}
+        />
+        <TextInput
+          label="Target demographic"
+          labelProps={{ style: { whiteSpace: "nowrap" } }}
+          {...form.getInputProps("targetDemographic")}
+        />
+        <TextInput
+          label="Gender"
+          labelProps={{ style: { whiteSpace: "nowrap" } }}
+          {...form.getInputProps("gender")}
+        />
+      </Group>
+      <h2>
+        <Flex align="center" gap="xs">
+          Campaign
+          <IconAd color="#854d97" />
+        </Flex>
+      </h2>
 
-      <TextInput label="Target area" {...form.getInputProps("targetArea")} />
-      <TextInput
-        label="Target demographic"
-        {...form.getInputProps("targetDemographic")}
+      <Textarea
+        w={"38rem"}
+        label="Ad title"
+        {...form.getInputProps("adTitle")}
       />
-      <TextInput label="Gender" {...form.getInputProps("gender")} />
-      <h2>Campaign</h2>
-
-      <TextInput label="Ad title" {...form.getInputProps("adTitle")} />
-      <TextInput label="Ad text" {...form.getInputProps("adText")} />
-      <TextInput label="Media info" {...form.getInputProps("mediaInfo")} />
-      <TextInput label="Ad URL" {...form.getInputProps("adUrl")} />
-      <TextInput label="CTA" {...form.getInputProps("CTA")} />
-      <Group justify="flex-end" mt="md">
+      <Textarea w={"38rem"} label="Ad text" {...form.getInputProps("adText")} />
+      <TextInput
+        w={"38rem"}
+        label="Media info"
+        {...form.getInputProps("mediaInfo")}
+      />
+      <TextInput w={"38rem"} label="Ad URL" {...form.getInputProps("adUrl")} />
+      <TextInput w={"38rem"} label="CTA" {...form.getInputProps("CTA")} />
+      <Group mt="md">
         <Button type="submit">Submit</Button>
       </Group>
     </form>
