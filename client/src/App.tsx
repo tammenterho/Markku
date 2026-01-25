@@ -1,4 +1,3 @@
-import "./App.css";
 import { AppShell } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import Header from "./components/Header";
@@ -12,7 +11,7 @@ function App() {
       padding="md"
       header={{ height: 60 }}
       navbar={{
-        width: 300,
+        width: 200,
         breakpoint: "sm",
         collapsed: { mobile: !opened },
       }}
