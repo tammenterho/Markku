@@ -1,8 +1,8 @@
 import { Route, Routes } from "react-router-dom";
 import NotFound from "./NotFound";
-import { CampaignList } from "./campaignList";
 import Home from "./Home";
 import CreateCampaign from "./CreateCampaign";
+import { CampaignList } from "./campaignList";
 
 const RouterSwitcher = () => {
   return (
