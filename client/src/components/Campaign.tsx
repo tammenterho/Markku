@@ -26,7 +26,7 @@ export interface Campaign {
   budget: number;
   start: Date;
   end: Date;
-  status: string;
+  status: boolean;
   type: string;
 }
 

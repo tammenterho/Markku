@@ -2,5 +2,5 @@
   cursor: pointer;
 }
 .trashIcon:hover {
-  color: red;
+  color: rgb(150, 62, 62);
 }

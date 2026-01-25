@@ -109,7 +109,7 @@ export const CampaignList = () => {
     campaignToUpdate: CampaignType,
   ) => {
     e.stopPropagation();
-    const newStatus = campaignToUpdate.status === "Y" ? "N" : "Y";
+    const newStatus = !campaignToUpdate.status;
     try {
       await axios.patch(
         `http://localhost:3000/campaigns/${campaignToUpdate.id}`,
@@ -214,7 +214,7 @@ export const CampaignList = () => {
           onClick={(e) => handleStatusUpdate(e, campaign)}
           style={{ display: "inline-block" }}
         >
-          {campaign.status === "Y" ? (
+          {campaign.status ? (
             <IconCircleCheck color="green" />
           ) : (
             <IconCircleMinus color="red" />

@@ -47,8 +47,8 @@ export class Campaign {
   @Column({ type: 'date', nullable: true })
   end: Date;
 
-  @Column({ type: 'varchar', length: 50, default: 'draft' })
-  status: string;
+  @Column({ default: false })
+  status: boolean;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
   type: string;
