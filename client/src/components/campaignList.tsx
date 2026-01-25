@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { Table, Container, Loader, Text } from "@mantine/core";
+import { IconCircleCheck, IconCircleMinus } from "@tabler/icons-react";
 
 interface Campaign {
   id: string;
@@ -39,29 +40,13 @@ export const CampaignList = () => {
 
   if (loading) {
     return (
-      <Container style={{ display: "flex", justifyContent: "center", padding: "40px" }}>
+      <Container
+        style={{ display: "flex", justifyContent: "center", padding: "40px" }}
+      >
         <Loader />
       </Container>
     );
   }
-
-// id
-// clientId
-// companyId
-// company
-// customer
-// name
-// title
-// copyText
-// targetAge
-// targetArea
-// budget
-// start
-// end
-// status
-// type
-// createdAt
-// updatedAt
 
   if (campaigns.length === 0) {
     return (
@@ -80,14 +65,26 @@ export const CampaignList = () => {
       <Table.Td>{new Date(campaign.end).toLocaleDateString()}</Table.Td>
       <Table.Td>{campaign.budget}€</Table.Td>
       <Table.Td>{campaign.type}</Table.Td>
-      <Table.Td>{campaign.status}</Table.Td>
+      <Table.Td>
+        {campaign.status == "Y" ? (
+          <IconCircleCheck color="green" />
+        ) : (
+          <IconCircleMinus color="red" />
+        )}
+      </Table.Td>
     </Table.Tr>
   ));
 
   return (
     <div style={{ width: "100%" }}>
       <h1>Kampanjat</h1>
-      <Table striped highlightOnHover withTableBorder withColumnBorders verticalSpacing="md">
+      <Table
+        striped
+        highlightOnHover
+        withTableBorder
+        withColumnBorders
+        verticalSpacing="md"
+      >
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Yritys</Table.Th>
