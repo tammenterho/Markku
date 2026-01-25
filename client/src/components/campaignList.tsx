@@ -15,27 +15,10 @@ import {
   IconChevronUp,
   IconChevronDown,
 } from "@tabler/icons-react";
+import Campaign from "./Campaign";
 
 type SortKey = keyof Campaign | null;
 type SortDirection = "asc" | "desc";
-
-interface Campaign {
-  id: string;
-  clientId: string;
-  companyId: string;
-  company: string;
-  customer: string;
-  name: string;
-  title: string;
-  copyText: string;
-  targetAge: string;
-  targetArea: string;
-  budget: number;
-  start: Date;
-  end: Date;
-  status: string;
-  type: string;
-}
 
 export const CampaignList = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -43,6 +26,10 @@ export const CampaignList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
+    null,
+  );
+  const [modalOpened, setModalOpened] = useState(false);
 
   useEffect(() => {
     axios
@@ -138,16 +125,23 @@ export const CampaignList = () => {
         <span>{label}</span>
         {sortKey === sortBy &&
           (sortDirection === "asc" ? (
-            <IconChevronUp size={14} />
+            <IconChevronUp />
           ) : (
-            <IconChevronDown size={14} />
+            <IconChevronDown />
           ))}
       </Group>
     </Table.Th>
   );
 
   const rows = sortedCampaigns.map((campaign) => (
-    <Table.Tr key={campaign.id}>
+    <Table.Tr
+      key={campaign.id}
+      onClick={() => {
+        setSelectedCampaign(campaign);
+        setModalOpened(true);
+      }}
+      style={{ cursor: "pointer" }}
+    >
       <Table.Td>{campaign.company}</Table.Td>
       <Table.Td>{campaign.name}</Table.Td>
       <Table.Td>{campaign.title}</Table.Td>
@@ -200,6 +194,12 @@ export const CampaignList = () => {
           <Table.Tbody>{rows}</Table.Tbody>
         </Table>
       )}
+
+      <Campaign
+        campaign={selectedCampaign}
+        opened={modalOpened}
+        onClose={() => setModalOpened(false)}
+      />
     </div>
   );
 };
