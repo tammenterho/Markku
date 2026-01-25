@@ -7,7 +7,7 @@ export class CampaignsController {
   constructor(private readonly campaignsService: CampaignsService) {}
 
   @Get()
-  findAll(): Campaign[] {
+  async findAll(): Promise<Campaign[]> {
     return this.campaignsService.findAll();
   }
 }
