@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Table, Container, Loader, Text } from "@mantine/core";
-import { IconCircleCheck, IconCircleMinus } from "@tabler/icons-react";
+import { Table, Container, Loader, Text, TextInput } from "@mantine/core";
+import { IconCircleCheck, IconCircleMinus, IconSearch } from "@tabler/icons-react";
 
 interface Campaign {
   id: string;
@@ -24,6 +24,7 @@ interface Campaign {
 export const CampaignList = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     axios
@@ -56,7 +57,18 @@ export const CampaignList = () => {
     );
   }
 
-  const rows = campaigns.map((campaign) => (
+  const filteredCampaigns = campaigns.filter((campaign) => {
+    const query = searchQuery.toLowerCase();
+    return (
+      campaign.company.toLowerCase().includes(query) ||
+      campaign.name.toLowerCase().includes(query) ||
+      campaign.title.toLowerCase().includes(query) ||
+      campaign.customer.toLowerCase().includes(query) ||
+      campaign.type.toLowerCase().includes(query)
+    );
+  });
+
+  const rows = filteredCampaigns.map((campaign) => (
     <Table.Tr key={campaign.id}>
       <Table.Td>{campaign.company}</Table.Td>
       <Table.Td>{campaign.name}</Table.Td>
@@ -78,27 +90,38 @@ export const CampaignList = () => {
   return (
     <div style={{ width: "100%" }}>
       <h1>Kampanjat</h1>
-      <Table
-        striped
-        highlightOnHover
-        withTableBorder
-        withColumnBorders
-        verticalSpacing="md"
-      >
-        <Table.Thead>
-          <Table.Tr>
-            <Table.Th>Yritys</Table.Th>
-            <Table.Th>Nimi</Table.Th>
-            <Table.Th>Otsikko</Table.Th>
-            <Table.Th>Alku pvm</Table.Th>
-            <Table.Th>Loppu pvm</Table.Th>
-            <Table.Th>Budjetti</Table.Th>
-            <Table.Th>Tyyppi</Table.Th>
-            <Table.Th>Tila</Table.Th>
-          </Table.Tr>
-        </Table.Thead>
-        <Table.Tbody>{rows}</Table.Tbody>
-      </Table>
+      <TextInput
+        placeholder="Hae kampanjaa..."
+        leftSection={<IconSearch />}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.currentTarget.value)}
+        mb="md"
+      />
+      {filteredCampaigns.length === 0 ? (
+        <Text>Ei kampanjoita löytynyt haulla "{searchQuery}"</Text>
+      ) : (
+        <Table
+          striped
+          highlightOnHover
+          withTableBorder
+          withColumnBorders
+          verticalSpacing="md"
+        >
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Yritys</Table.Th>
+              <Table.Th>Nimi</Table.Th>
+              <Table.Th>Otsikko</Table.Th>
+              <Table.Th>Alku pvm</Table.Th>
+              <Table.Th>Loppu pvm</Table.Th>
+              <Table.Th>Budjetti</Table.Th>
+              <Table.Th>Tyyppi</Table.Th>
+              <Table.Th>Tila</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>{rows}</Table.Tbody>
+        </Table>
+      )}
     </div>
   );
 };
