@@ -1,7 +1,16 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Table, Container, Loader, Text, TextInput } from "@mantine/core";
-import { IconCircleCheck, IconCircleMinus, IconSearch } from "@tabler/icons-react";
+import { Table, Container, Loader, Text, TextInput, Group } from "@mantine/core";
+import {
+  IconCircleCheck,
+  IconCircleMinus,
+  IconSearch,
+  IconChevronUp,
+  IconChevronDown,
+} from "@tabler/icons-react";
+
+type SortKey = keyof Campaign | null;
+type SortDirection = "asc" | "desc";
 
 interface Campaign {
   id: string;
@@ -25,6 +34,8 @@ export const CampaignList = () => {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   useEffect(() => {
     axios
@@ -68,7 +79,59 @@ export const CampaignList = () => {
     );
   });
 
-  const rows = filteredCampaigns.map((campaign) => (
+  const handleSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedCampaigns = [...filteredCampaigns].sort((a, b) => {
+    if (!sortKey) return 0;
+
+    let aValue = a[sortKey];
+    let bValue = b[sortKey];
+
+    // Handle budget as numerical sorting
+    if (sortKey === "budget") {
+      const aNum = typeof aValue === "string" ? parseFloat(aValue) : Number(aValue);
+      const bNum = typeof bValue === "string" ? parseFloat(bValue) : Number(bValue);
+      return sortDirection === "asc" ? aNum - bNum : bNum - aNum;
+    }
+
+    if (typeof aValue === "string" && typeof bValue === "string") {
+      return sortDirection === "asc"
+        ? aValue.localeCompare(bValue)
+        : bValue.localeCompare(aValue);
+    }
+
+    if (typeof aValue === "number" && typeof bValue === "number") {
+      return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+    }
+
+    return 0;
+  });
+
+  const SortableHeader = ({ label, sortBy }: { label: string; sortBy: SortKey }) => (
+    <Table.Th
+      onClick={() => handleSort(sortBy)}
+      style={{ cursor: "pointer", userSelect: "none" }}
+    >
+      <Group gap="xs" justify="flex-start">
+        <span>{label}</span>
+        {sortKey === sortBy &&
+          (sortDirection === "asc" ? (
+            <IconChevronUp size={14} />
+          ) : (
+            <IconChevronDown size={14} />
+          ))}
+      </Group>
+    </Table.Th>
+  );
+
+  const rows = sortedCampaigns.map((campaign) => (
     <Table.Tr key={campaign.id}>
       <Table.Td>{campaign.company}</Table.Td>
       <Table.Td>{campaign.name}</Table.Td>
@@ -109,13 +172,13 @@ export const CampaignList = () => {
         >
           <Table.Thead>
             <Table.Tr>
-              <Table.Th>Yritys</Table.Th>
-              <Table.Th>Nimi</Table.Th>
-              <Table.Th>Otsikko</Table.Th>
-              <Table.Th>Alku pvm</Table.Th>
-              <Table.Th>Loppu pvm</Table.Th>
-              <Table.Th>Budjetti</Table.Th>
-              <Table.Th>Tyyppi</Table.Th>
+              <SortableHeader label="Yritys" sortBy="company" />
+              <SortableHeader label="Nimi" sortBy="name" />
+              <SortableHeader label="Otsikko" sortBy="title" />
+              <SortableHeader label="Alku pvm" sortBy="start" />
+              <SortableHeader label="Loppu pvm" sortBy="end" />
+              <SortableHeader label="Budjetti" sortBy="budget" />
+              <SortableHeader label="Tyyppi" sortBy="type" />
               <Table.Th>Tila</Table.Th>
             </Table.Tr>
           </Table.Thead>
