@@ -1,7 +1,9 @@
 import "./App.css";
-import { CampaignList } from "./components/campaignList";
-import { AppShell, Burger } from "@mantine/core";
+import { AppShell } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
+import Header from "./components/Header";
+import Navbar from "./components/Navbar";
+import RouterSwitcher from "./components/RouterSwitcher";
 
 function App() {
   const [opened, { toggle }] = useDisclosure();
@@ -15,17 +17,10 @@ function App() {
         collapsed: { mobile: !opened },
       }}
     >
-      <AppShell.Header>
-        <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-
-        <div>Markku</div>
-      </AppShell.Header>
-
-      <AppShell.Navbar>Navbar</AppShell.Navbar>
-
+      <Header toggle={toggle} opened={opened} />
+      <Navbar />
       <AppShell.Main>
-        Main
-        <CampaignList />
+        <RouterSwitcher />
       </AppShell.Main>
     </AppShell>
   );
