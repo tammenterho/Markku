@@ -1,6 +1,20 @@
-import { Modal, Stack, Text, Badge } from "@mantine/core";
+import {
+  Modal,
+  Stack,
+  Text,
+  Badge,
+  TextInput,
+  Textarea,
+  Button,
+  Group,
+  NumberInput,
+} from "@mantine/core";
+import { useForm } from "@mantine/form";
+import { DatePickerInput } from "@mantine/dates";
+import { useEffect } from "react";
+import axios from "axios";
 
-interface Campaign {
+export interface Campaign {
   id: string;
   clientId: string;
   companyId: string;
@@ -22,62 +36,99 @@ interface CampaignProps {
   campaign: Campaign | null;
   opened: boolean;
   onClose: () => void;
+  onUpdate: () => void;
 }
 
-const Campaign = ({ campaign, opened, onClose }: CampaignProps) => {
+const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
+  const form = useForm({
+    initialValues: {
+      company: "",
+      customer: "",
+      name: "",
+      title: "",
+      copyText: "",
+      targetAge: "",
+      targetArea: "",
+      budget: 0,
+      start: null as Date | null,
+      end: null as Date | null,
+    },
+  });
+
+  useEffect(() => {
+    if (campaign) {
+      form.setValues({
+        company: campaign.company,
+        customer: campaign.customer,
+        name: campaign.name,
+        title: campaign.title,
+        copyText: campaign.copyText,
+        targetAge: campaign.targetAge,
+        targetArea: campaign.targetArea,
+        budget: campaign.budget,
+        start: campaign.start ? new Date(campaign.start) : null,
+        end: campaign.end ? new Date(campaign.end) : null,
+      });
+    }
+  }, [campaign, opened]);
+
+  const handleUpdate = async (values: typeof form.values) => {
+    if (!campaign) return;
+
+    try {
+      await axios.patch(
+        `http://localhost:3000/campaigns/${campaign.id}`,
+        values,
+      );
+      onUpdate();
+      onClose();
+    } catch (error) {
+      console.error("Error updating campaign:", error);
+    }
+  };
+
   return (
-    <Modal opened={opened} onClose={onClose} title={campaign?.name} size="lg">
+    <Modal
+      opened={opened}
+      onClose={onClose}
+      title={`Muokkaa: ${campaign?.name}`}
+      size="lg"
+    >
       {campaign && (
-        <Stack gap="md">
-          <div>
-            <Text fw={500}>Yritys</Text>
-            <Text>{campaign.company}</Text>
-          </div>
-          <div>
-            <Text fw={500}>Asiakas</Text>
-            <Text>{campaign.customer}</Text>
-          </div>
-          <div>
-            <Text fw={500}>Otsikko</Text>
-            <Text>{campaign.title}</Text>
-          </div>
-          <div>
-            <Text fw={500}>Kopiointiaa</Text>
-            <Text>{campaign.copyText}</Text>
-          </div>
-          <div>
-            <Text fw={500}>Kohderyhmä</Text>
-            <Text>{campaign.targetAge}</Text>
-          </div>
-          <div>
-            <Text fw={500}>Kohdealue</Text>
-            <Text>{campaign.targetArea}</Text>
-          </div>
-          <div>
-            <Text fw={500}>Budjetti</Text>
-            <Text>{campaign.budget}€</Text>
-          </div>
-          <div>
-            <Text fw={500}>Kampanja alkaa</Text>
-            <Text>{new Date(campaign.start).toLocaleDateString()}</Text>
-          </div>
-          <div>
-            <Text fw={500}>Kampanja päättyy</Text>
-            <Text>{new Date(campaign.end).toLocaleDateString()}</Text>
-          </div>
-          <div>
-            <Text fw={500}>Tyyppi</Text>
-            <Badge>{campaign.type}</Badge>
-          </div>
-          <div>
-            <Text fw={500}>Tila</Text>
-            {campaign.status === "Y" ? (
-              <Badge color="green">Aktiivinen</Badge>
-            ) : (
-              <Badge color="red">Ei aktiivinen</Badge>
-            )}
-          </div>
-        </Stack>
+        <form onSubmit={form.onSubmit(handleUpdate)}>
+          <Stack gap="md">
+            <TextInput label="Yritys" {...form.getInputProps("company")} />
+            <TextInput label="Asiakas" {...form.getInputProps("customer")} />
+            <TextInput label="Otsikko" {...form.getInputProps("title")} />
+            <Textarea label="Kopio" {...form.getInputProps("copyText")} />
+            <TextInput
+              label="Kohderyhmä"
+              {...form.getInputProps("targetAge")}
+            />
+            <TextInput
+              label="Kohdealue"
+              {...form.getInputProps("targetArea")}
+            />
+            <NumberInput
+              label="Budjetti (€)"
+              {...form.getInputProps("budget")}
+            />
+            <DatePickerInput
+              label="Kampanja alkaa"
+              {...form.getInputProps("start")}
+            />
+            <DatePickerInput
+              label="Kampanja päättyy"
+              {...form.getInputProps("end")}
+            />
+            <Group justify="flex-end" mt="md">
+              <Button onClick={onClose} variant="default">
+                Peruuta
+              </Button>
+              <Button type="submit">Tallenna muutokset</Button>
+            </Group>
+          </Stack>
+        </form>
       )}
     </Modal>
   );

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Campaign } from './campaign.entity';
 import { AppDataSource } from './data-source';
+import { UpdateResult } from 'typeorm';
 
 @Injectable()
 export class CampaignsService {
@@ -17,5 +18,15 @@ export class CampaignsService {
     }
     console.log('CREATING1');
     return AppDataSource.getRepository(Campaign).save(campaignData);
+  }
+
+  async update(
+    id: string,
+    campaignData: Partial<Campaign>,
+  ): Promise<UpdateResult> {
+    if (!AppDataSource.isInitialized) {
+      await AppDataSource.initialize();
+    }
+    return AppDataSource.getRepository(Campaign).update(id, campaignData);
   }
 }

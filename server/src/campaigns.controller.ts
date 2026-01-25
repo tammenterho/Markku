@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { CampaignsService } from './campaigns.service';
 import { Campaign } from './campaign.entity';
 
@@ -13,8 +13,12 @@ export class CampaignsController {
 
   @Post()
   create(@Body() campaign: Partial<Campaign>) {
-    console.log('CREATING');
-
     return this.campaignsService.create(campaign);
+  }
+
+  @Patch(':id')
+  update(@Param('id') id: string, @Body() campaign: Partial<Campaign>) {
+    console.log('UPDATING');
+    return this.campaignsService.update(id, campaign);
   }
 }

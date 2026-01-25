@@ -15,23 +15,24 @@ import {
   IconChevronUp,
   IconChevronDown,
 } from "@tabler/icons-react";
-import Campaign from "./Campaign";
+import Campaign, { type Campaign as CampaignType } from "./Campaign";
 
-type SortKey = keyof Campaign | null;
+type SortKey = keyof CampaignType | null;
 type SortDirection = "asc" | "desc";
 
 export const CampaignList = () => {
-  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
+  const [campaigns, setCampaigns] = useState<CampaignType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [selectedCampaign, setSelectedCampaign] = useState<Campaign | null>(
+  const [selectedCampaign, setSelectedCampaign] = useState<CampaignType | null>(
     null,
   );
   const [modalOpened, setModalOpened] = useState(false);
 
-  useEffect(() => {
+  const fetchCampaigns = () => {
+    setLoading(true);
     axios
       .get("http://localhost:3000/campaigns")
       .then((response) => {
@@ -42,6 +43,10 @@ export const CampaignList = () => {
         console.error("Error fetching campaigns:", error);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    fetchCampaigns();
   }, []);
 
   if (loading) {
@@ -72,6 +77,27 @@ export const CampaignList = () => {
       campaign.type.toLowerCase().includes(query)
     );
   });
+
+  const handleStatusUpdate = async (
+    e: React.MouseEvent,
+    campaignToUpdate: CampaignType,
+  ) => {
+    e.stopPropagation();
+    const newStatus = campaignToUpdate.status === "Y" ? "N" : "Y";
+    try {
+      await axios.patch(
+        `http://localhost:3000/campaigns/${campaignToUpdate.id}`,
+        { status: newStatus },
+      );
+      setCampaigns(
+        campaigns.map((c) =>
+          c.id === campaignToUpdate.id ? { ...c, status: newStatus } : c,
+        ),
+      );
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
+  };
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -124,11 +150,7 @@ export const CampaignList = () => {
       <Group gap="xs" justify="flex-start">
         <span>{label}</span>
         {sortKey === sortBy &&
-          (sortDirection === "asc" ? (
-            <IconChevronUp />
-          ) : (
-            <IconChevronDown />
-          ))}
+          (sortDirection === "asc" ? <IconChevronUp /> : <IconChevronDown />)}
       </Group>
     </Table.Th>
   );
@@ -150,11 +172,16 @@ export const CampaignList = () => {
       <Table.Td>{campaign.budget}€</Table.Td>
       <Table.Td>{campaign.type}</Table.Td>
       <Table.Td>
-        {campaign.status == "Y" ? (
-          <IconCircleCheck color="green" />
-        ) : (
-          <IconCircleMinus color="red" />
-        )}
+        <div
+          onClick={(e) => handleStatusUpdate(e, campaign)}
+          style={{ display: "inline-block" }}
+        >
+          {campaign.status === "Y" ? (
+            <IconCircleCheck color="green" />
+          ) : (
+            <IconCircleMinus color="red" />
+          )}
+        </div>
       </Table.Td>
     </Table.Tr>
   ));
@@ -199,6 +226,7 @@ export const CampaignList = () => {
         campaign={selectedCampaign}
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
+        onUpdate={fetchCampaigns}
       />
     </div>
   );
