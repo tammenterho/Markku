@@ -57,7 +57,7 @@ const ctas = [
 const CreateCampaign = () => {
   const navigate = useNavigate();
 
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<(File & { preview: string })[]>([]);
 
   const removeFile = (index: number) => {
     setFiles((prev) => prev.filter((_, i) => i !== index));
