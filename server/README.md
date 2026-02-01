@@ -7,4 +7,5 @@ Run the following commands to start the server application:
 ```bash
 npm install
 npm run start
+npm run start:dev
 ```

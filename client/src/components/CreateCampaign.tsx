@@ -20,6 +20,7 @@ import {
 } from "@tabler/icons-react";
 
 const companyData = ["Yritys A", "Yritys B", "Yritys C"];
+const genders = ["All", "Female", "Male"];
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
@@ -35,7 +36,7 @@ const CreateCampaign = () => {
       endDate: null as Date | null,
       targetArea: "",
       targetDemographic: "",
-      gender: "",
+      gender: "All",
       adTitle: "",
       adText: "",
       mediaInfo: "",
@@ -143,8 +144,9 @@ const CreateCampaign = () => {
             labelProps={{ style: { whiteSpace: "nowrap" } }}
             {...form.getInputProps("targetDemographic")}
           />
-          <TextInput
+          <Select
             label="Gender"
+            data={genders}
             labelProps={{ style: { whiteSpace: "nowrap" } }}
             {...form.getInputProps("gender")}
           />
