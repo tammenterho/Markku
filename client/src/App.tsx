@@ -6,6 +6,12 @@ import RouterSwitcher from "./components/RouterSwitcher";
 
 function App() {
   const [opened, { toggle }] = useDisclosure();
+  const isAuthenticated = Boolean(localStorage.getItem("accessToken"));
+
+  if (!isAuthenticated) {
+    return <RouterSwitcher />;
+  }
+
   return (
     <AppShell
       padding="md"
