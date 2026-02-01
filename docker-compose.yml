@@ -1,7 +1,16 @@
-version: "3.8"
 services:
+  api:
+    build: ./server
+    container_name: markku-api
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    depends_on:
+      - db
   db:
     image: postgres:15
+    container_name: markku-db
     restart: always
     ports:
       - "5432:5432"
@@ -11,3 +20,5 @@ services:
       POSTGRES_DB: campaigns
     volumes:
       - ./sql:/docker-entrypoint-initdb.d
+volumes:
+  postgres_data:
