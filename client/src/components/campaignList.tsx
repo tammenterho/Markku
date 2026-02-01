@@ -263,14 +263,14 @@ export const CampaignList = () => {
               </Table.Td>
             );
           }
-          let content: any = campaign[col.key as keyof CampaignType];
+          let content: string | number = campaign[col.key as keyof CampaignType] as string | number ;
           if (
             col.key === "start" ||
             col.key === "end" ||
             col.key === "createdAt" ||
             col.key === "updatedAt"
           ) {
-            content = new Date(content as Date).toLocaleDateString();
+            content = new Date(content as unknown as Date).toLocaleDateString();
           } else if (col.key === "budget") {
             content = `${content}€`;
           }
