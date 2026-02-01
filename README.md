@@ -5,20 +5,13 @@
 ### Start with Docker
 
 Run the following command to start the application containers:
+This will also start dockerized backend API
 
 ```bash
 docker-compose up --build
 ```
 
 ### Start Application Manually
-
-**Server:**
-
-```bash
-cd server
-npm install
-npm run start
-```
 
 **Client:**
 

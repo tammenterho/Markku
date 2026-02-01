@@ -41,10 +41,10 @@ export class Campaign {
   @Column({ type: 'numeric', default: 0 })
   budget: number;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   start: Date;
 
-  @Column({ type: 'date', nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
   end: Date;
 
   @Column({ default: false })
@@ -58,4 +58,7 @@ export class Campaign {
 
   @UpdateDateColumn()
   updatedAt: Date;
+
+  @Column({ type: 'varchar', length: 255 })
+  createdBy: string;
 }

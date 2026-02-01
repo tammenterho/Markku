@@ -6,6 +6,7 @@ import {
   Button,
   Group,
   NumberInput,
+  Text,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { DatePickerInput } from "@mantine/dates";
@@ -28,6 +29,9 @@ export interface Campaign {
   end: Date;
   status: boolean;
   type: string;
+  createdBy: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface CampaignProps {
@@ -36,6 +40,17 @@ interface CampaignProps {
   onClose: () => void;
   onUpdate: () => void;
 }
+
+const formatDate = (date: Date | string) => {
+  const d = new Date(date);
+  const day = d.getDate().toString().padStart(2, "0");
+  const month = (d.getMonth() + 1).toString().padStart(2, "0");
+  const year = d.getFullYear();
+  const hours = d.getHours().toString().padStart(2, "0");
+  const minutes = d.getMinutes().toString().padStart(2, "0");
+
+  return `${day}.${month}.${year} klo. ${hours}:${minutes}`;
+};
 
 const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
   const form = useForm({
@@ -94,6 +109,9 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
     >
       {campaign && (
         <form onSubmit={form.onSubmit(handleUpdate)}>
+          <Text size="sm">
+            Luonut: {campaign.createdBy} {formatDate(campaign.createdAt)}
+          </Text>
           <Stack gap="md">
             <TextInput label="Yritys" {...form.getInputProps("company")} />
             <TextInput label="Asiakas" {...form.getInputProps("customer")} />

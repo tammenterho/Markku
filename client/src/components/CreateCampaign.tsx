@@ -139,6 +139,7 @@ const CreateCampaign = () => {
       targetAge: values.targetDemographic,
       title: values.adTitle,
       copyText: values.adText,
+      createdBy: "",
     };
 
     try {
@@ -245,6 +246,7 @@ const CreateCampaign = () => {
                   color="blue"
                   min={18}
                   max={65}
+                  minRange={5}
                   defaultValue={[18, 65]}
                   marks={[
                     { value: 18, label: "18" },
