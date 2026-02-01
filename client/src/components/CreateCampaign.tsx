@@ -195,8 +195,8 @@ const CreateCampaign = () => {
               {...form.getInputProps("budgetPeriod")}
             >
               <Group mt="xs">
-                <Radio value="Day" label="Päivä" />
-                <Radio value="Duration" label="Koko pituus" />
+                <Radio value="DAY" label="Päivä" />
+                <Radio value="DURATION" label="Koko pituus" />
               </Group>
             </Radio.Group>
           </Group>

@@ -8,6 +8,8 @@ import {
   TextInput,
   Group,
   Button,
+  Menu,
+  Checkbox,
 } from "@mantine/core";
 import {
   IconCircleCheck,
@@ -16,6 +18,7 @@ import {
   IconChevronUp,
   IconChevronDown,
   IconTrash,
+  IconColumns,
 } from "@tabler/icons-react";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
 import classes from "./campaignList.module.css";
@@ -35,6 +38,35 @@ export const CampaignList = () => {
     null,
   );
   const [modalOpened, setModalOpened] = useState(false);
+
+  const [columns, setColumns] = useState([
+    { key: "company", label: "Yritys", visible: true },
+    { key: "name", label: "Nimi", visible: true },
+    { key: "title", label: "Otsikko", visible: true },
+    { key: "start", label: "Alku pvm", visible: true },
+    { key: "end", label: "Loppu pvm", visible: true },
+    { key: "budget", label: "Budjetti", visible: true },
+    { key: "type", label: "Tyyppi", visible: true },
+    { key: "status", label: "Tila", visible: true },
+    { key: "actions", label: "Poista", visible: true },
+    // Hidden by default
+    { key: "id", label: "ID", visible: false },
+    { key: "clientId", label: "Client ID", visible: false },
+    { key: "companyId", label: "Company ID", visible: false },
+    { key: "customer", label: "Asiakas", visible: false },
+    { key: "payer", label: "Maksaja", visible: false },
+    { key: "copyText", label: "Teksti", visible: false },
+    { key: "mediaInfo", label: "Media Info", visible: false },
+    { key: "url", label: "URL", visible: false },
+    { key: "cta", label: "CTA", visible: false },
+    { key: "targetAge", label: "Kohdeikä", visible: false },
+    { key: "targetGender", label: "Sukupuoli", visible: false },
+    { key: "targetArea", label: "Alue", visible: false },
+    { key: "budgetPeriod", label: "Budjettikausi", visible: false },
+    { key: "createdAt", label: "Luotu", visible: false },
+    { key: "updatedAt", label: "Päivitetty", visible: false },
+    { key: "createdBy", label: "Luonut", visible: false },
+  ]);
 
   const fetchCampaigns = () => {
     setLoading(true);
@@ -202,31 +234,48 @@ export const CampaignList = () => {
       }}
       style={{ cursor: "pointer" }}
     >
-      <Table.Td>{campaign.company}</Table.Td>
-      <Table.Td>{campaign.name}</Table.Td>
-      <Table.Td>{campaign.title}</Table.Td>
-      <Table.Td>{new Date(campaign.start).toLocaleDateString()}</Table.Td>
-      <Table.Td>{new Date(campaign.end).toLocaleDateString()}</Table.Td>
-      <Table.Td>{campaign.budget}€</Table.Td>
-      <Table.Td>{campaign.type}</Table.Td>
-      <Table.Td>
-        <div
-          onClick={(e) => handleStatusUpdate(e, campaign)}
-          style={{ display: "inline-block" }}
-        >
-          {campaign.status ? (
-            <IconCircleCheck color="green" />
-          ) : (
-            <IconCircleMinus color="red" />
-          )}
-        </div>
-      </Table.Td>
-      <Table.Td>
-        <IconTrash
-          className={classes.trashIcon}
-          onClick={(e) => handleDelete(e, campaign.id)}
-        />
-      </Table.Td>
+      {columns
+        .filter((c) => c.visible)
+        .map((col) => {
+          if (col.key === "actions") {
+            return (
+              <Table.Td key={col.key}>
+                <IconTrash
+                  className={classes.trashIcon}
+                  onClick={(e) => handleDelete(e, campaign.id)}
+                />
+              </Table.Td>
+            );
+          }
+          if (col.key === "status") {
+            return (
+              <Table.Td key={col.key}>
+                <div
+                  onClick={(e) => handleStatusUpdate(e, campaign)}
+                  style={{ display: "inline-block" }}
+                >
+                  {campaign.status ? (
+                    <IconCircleCheck color="green" />
+                  ) : (
+                    <IconCircleMinus color="red" />
+                  )}
+                </div>
+              </Table.Td>
+            );
+          }
+          let content: any = campaign[col.key as keyof CampaignType];
+          if (
+            col.key === "start" ||
+            col.key === "end" ||
+            col.key === "createdAt" ||
+            col.key === "updatedAt"
+          ) {
+            content = new Date(content as Date).toLocaleDateString();
+          } else if (col.key === "budget") {
+            content = `${content}€`;
+          }
+          return <Table.Td key={col.key}>{content}</Table.Td>;
+        })}
     </Table.Tr>
   ));
 
@@ -259,13 +308,42 @@ export const CampaignList = () => {
           Tulevat
         </Button>
       </Group>
-      <TextInput
-        placeholder="Hae kampanjaa..."
-        leftSection={<IconSearch />}
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.currentTarget.value)}
-        mb="md"
-      />
+      <Group mb="md">
+        <TextInput
+          placeholder="Hae kampanjaa..."
+          leftSection={<IconSearch />}
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.currentTarget.value)}
+          style={{ flex: 1 }}
+        />
+        <Menu shadow="md" width={200} closeOnItemClick={false}>
+          <Menu.Target>
+            <Button variant="default" leftSection={<IconColumns size={16} />}>
+              Sarakkeet
+            </Button>
+          </Menu.Target>
+          <Menu.Dropdown>
+            <Menu.Label>Näytä sarakkeet</Menu.Label>
+            {columns.map((col, index) => (
+              <Menu.Item
+                key={col.key}
+                onClick={() => {
+                  const newColumns = [...columns];
+                  newColumns[index].visible = !newColumns[index].visible;
+                  setColumns(newColumns);
+                }}
+              >
+                <Checkbox
+                  label={col.label}
+                  checked={col.visible}
+                  readOnly
+                  style={{ pointerEvents: "none" }}
+                />
+              </Menu.Item>
+            ))}
+          </Menu.Dropdown>
+        </Menu>
+      </Group>
       {filteredCampaigns.length === 0 ? (
         <Text>Ei kampanjoita löytynyt haulla "{searchQuery}"</Text>
       ) : (
@@ -278,15 +356,19 @@ export const CampaignList = () => {
         >
           <Table.Thead>
             <Table.Tr>
-              <SortableHeader label="Yritys" sortBy="company" />
-              <SortableHeader label="Nimi" sortBy="name" />
-              <SortableHeader label="Otsikko" sortBy="title" />
-              <SortableHeader label="Alku pvm" sortBy="start" />
-              <SortableHeader label="Loppu pvm" sortBy="end" />
-              <SortableHeader label="Budjetti" sortBy="budget" />
-              <SortableHeader label="Tyyppi" sortBy="type" />
-              <Table.Th>Tila</Table.Th>
-              <Table.Th>Poista</Table.Th>
+              {columns
+                .filter((c) => c.visible)
+                .map((col) =>
+                  col.key === "actions" ? (
+                    <Table.Th key={col.key}>{col.label}</Table.Th>
+                  ) : (
+                    <SortableHeader
+                      key={col.key}
+                      label={col.label}
+                      sortBy={col.key as SortKey}
+                    />
+                  ),
+                )}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>{rows}</Table.Tbody>

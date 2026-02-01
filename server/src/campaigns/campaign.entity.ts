@@ -27,6 +27,9 @@ export class Campaign {
   name: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
+  payer: string;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
   title: string;
 
   @Column({ type: 'text', nullable: true })
@@ -35,11 +38,20 @@ export class Campaign {
   @Column({ type: 'varchar', length: 50, nullable: true })
   targetAge: string;
 
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  targetGender: string;
+
   @Column({ type: 'varchar', length: 100, nullable: true })
   targetArea: string;
 
   @Column({ type: 'numeric', default: 0 })
   budget: number;
+
+  @Column({ type: 'varchar', length: 255 })
+  budgetPeriod: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  mediaInfo: string;
 
   @Column({ type: 'timestamp', nullable: true })
   start: Date;
@@ -53,12 +65,18 @@ export class Campaign {
   @Column({ type: 'varchar', length: 50, nullable: true })
   type: string;
 
+  @Column({ type: 'varchar', length: 255 })
+  url: string;
+
+  @Column({ type: 'varchar', length: 255 })
+  cta: string;
+
+  @Column({ name: 'createdBy', type: 'varchar', length: 255 })
+  createdBy: string;
+
   @CreateDateColumn()
   createdAt: Date;
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  @Column({ type: 'varchar', length: 255 })
-  createdBy: string;
 }

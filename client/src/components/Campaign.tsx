@@ -7,11 +7,16 @@ import {
   Group,
   NumberInput,
   Text,
+  Select,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { DatePickerInput } from "@mantine/dates";
 import { useEffect } from "react";
+import { Title } from "@mantine/core";
 import axios from "axios";
+
+export type CampaignType = "AD" | "POST";
+export type BudgetPeriod = "DAY" | "DURATION";
 
 export interface Campaign {
   id: string;
@@ -20,18 +25,24 @@ export interface Campaign {
   company: string;
   customer: string;
   name: string;
+  payer: string;
   title: string;
   copyText: string;
+  mediaInfo: string;
+  url: string;
+  cta: string;
   targetAge: string;
+  targetGender: string;
   targetArea: string;
   budget: number;
+  budgetPeriod: BudgetPeriod;
   start: Date;
   end: Date;
   status: boolean;
-  type: string;
-  createdBy: string;
+  type: CampaignType;
   createdAt: Date;
   updatedAt: Date;
+  createdBy: string;
 }
 
 interface CampaignProps {
@@ -52,17 +63,33 @@ const formatDate = (date: Date | string) => {
   return `${day}.${month}.${year} klo. ${hours}:${minutes}`;
 };
 
+const typeLabels: Record<CampaignType, string> = {
+  AD: "Mainos",
+  POST: "Postaus",
+};
+
+const budgetPeriodLabels: Record<BudgetPeriod, string> = {
+  DAY: "Päiväbudjetti",
+  DURATION: "Koko mainoksen kesto",
+};
+
 const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
   const form = useForm({
     initialValues: {
       company: "",
       customer: "",
       name: "",
+      payer: "",
       title: "",
       copyText: "",
       targetAge: "",
+      targetGender: "",
       targetArea: "",
       budget: 0,
+      mediaInfo: "",
+      url: "",
+      cta: "",
+      budgetPeriod: "",
       start: null as Date | null,
       end: null as Date | null,
     },
@@ -74,11 +101,17 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
         company: campaign.company,
         customer: campaign.customer,
         name: campaign.name,
+        payer: campaign.payer,
         title: campaign.title,
         copyText: campaign.copyText,
+        mediaInfo: campaign.mediaInfo,
+        url: campaign.url,
+        cta: campaign.cta,
         targetAge: campaign.targetAge,
+        targetGender: campaign.targetGender,
         targetArea: campaign.targetArea,
         budget: campaign.budget,
+        budgetPeriod: campaign.budgetPeriod,
         start: campaign.start ? new Date(campaign.start) : null,
         end: campaign.end ? new Date(campaign.end) : null,
       });
@@ -109,25 +142,29 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
     >
       {campaign && (
         <form onSubmit={form.onSubmit(handleUpdate)}>
-          <Text size="sm">
+          <Text size="sm" fs={"italic"}>
             Luonut: {campaign.createdBy} {formatDate(campaign.createdAt)}
           </Text>
-          <Stack gap="md">
+          <Text size="sm" fs={"italic"}>
+            Tyyppi: {typeLabels[campaign.type]}
+          </Text>
+          <Stack gap="md" mt={"lg"}>
+            <Title order={5}>Yleiset</Title>
+            <TextInput label="Nimi" {...form.getInputProps("name")} />
             <TextInput label="Yritys" {...form.getInputProps("company")} />
             <TextInput label="Asiakas" {...form.getInputProps("customer")} />
-            <TextInput label="Otsikko" {...form.getInputProps("title")} />
-            <Textarea label="Kopio" {...form.getInputProps("copyText")} />
-            <TextInput
-              label="Kohderyhmä"
-              {...form.getInputProps("targetAge")}
-            />
-            <TextInput
-              label="Kohdealue"
-              {...form.getInputProps("targetArea")}
-            />
+            <TextInput label="Maksaja" {...form.getInputProps("payer")} />
             <NumberInput
               label="Budjetti (€)"
               {...form.getInputProps("budget")}
+            />
+            <Select
+              label="Budjetin käyttö"
+              data={[
+                { value: "DAY", label: budgetPeriodLabels.DAY },
+                { value: "DURATION", label: budgetPeriodLabels.DURATION },
+              ]}
+              {...form.getInputProps("budgetPeriod")}
             />
             <DatePickerInput
               label="Kampanja alkaa"
@@ -137,6 +174,25 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
               label="Kampanja päättyy"
               {...form.getInputProps("end")}
             />
+            <Title order={5}>Mainonnan kohde</Title>
+            <TextInput label="Ikä" {...form.getInputProps("targetAge")} />
+            <TextInput
+              label="Sukupuoli"
+              {...form.getInputProps("targetGender")}
+            />
+            <TextInput label="Alue" {...form.getInputProps("targetArea")} />
+            <Title order={5}>Mainostiedot</Title>
+            <TextInput label="Otsikko" {...form.getInputProps("title")} />
+            <Textarea
+              label={campaign.type === "AD" ? "Mainosteksti" : "Caption"}
+              {...form.getInputProps("copyText")}
+            />
+            <TextInput
+              label="Mediatiedot"
+              {...form.getInputProps("mediaInfo")}
+            />
+            <TextInput label="url" {...form.getInputProps("url")} />
+            <TextInput label="cta" {...form.getInputProps("cta")} />
             <Group justify="flex-end" mt="md">
               <Button onClick={onClose} variant="default">
                 Peruuta
