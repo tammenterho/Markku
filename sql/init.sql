@@ -44,3 +44,30 @@ INSERT INTO "campaigns" (
   ('659e7d23-473b-8d69-cb77-c2fb00000007', '659e7d23473b8d69cb77c2fb', '659e7d23473b8d69cb77c302', 'Auto Huolto Pääskylä', 'Petri Laine', 'Kevät huolto', 'Auton kevät huolto', 'Ilmainen tarkastus + 20% alennus', 'Age 30-70', 'Area Lahti', 350, '2026-04-01 07:30:00', '2026-05-31 17:00:00', false, 'POST', 'Koko Kikkeloinen'),
   ('659e7d23-473b-8d69-cb77-c2fb00000008', '659e7d23473b8d69cb77c2fb', '659e7d23473b8d69cb77c303', 'Vaatteet & Muoti', 'Hanna Karvonen', 'Keväät alennukset', 'Uusi mallistoväriksi', 'Talven vaatteet 50% alennuksella', 'Age 18-45', 'Area Jyväskylä', 700, '2026-03-15 10:00:00', '2026-04-30 20:00:00', true, 'POST', 'Pussi Heinonen'),
   ('659e7d23-473b-8d69-cb77-c2fb00000009', '659e7d23473b8d69cb77c2fb', '659e7d23473b8d69cb77c304', 'Hammashoitola Smile', 'Dr. Timo Repo', 'Hammaskampanja', 'Terve suu keväällä', 'Ilmainen tutkimus ja hampaiden puhdistus', 'Age 25-65', 'Area Kuopio', 400, '2026-04-01 08:00:00', '2026-06-30 16:00:00', false, 'POST', 'Jussi Heinonen');
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Creating users table...';
+END $$;
+
+CREATE TABLE IF NOT EXISTS "users" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "username" character varying NOT NULL,
+  "passwordHash" character varying NOT NULL,
+  "isActive" boolean NOT NULL DEFAULT true,
+  "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+  CONSTRAINT "PK_users_id" PRIMARY KEY ("id"),
+  CONSTRAINT "UQ_users_username" UNIQUE ("username")
+);
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Users table created';
+END $$;
+
+INSERT INTO "users" (
+  "id", "username", "passwordHash", "isActive", "createdAt", "updatedAt"
+) VALUES 
+  ('849d9aa3-379c-4cf1-b7bc-206fcc849763', 'leevi', '$2b$12$6ZbsNcrEpiU02ukkNB.geehjgpjfa6j9/cWjjT6dsLDo9cUSn9k52', true, '2026-02-01 14:24:43.314544', '2026-02-01 14:24:43.314544'),
+  ('be6972a7-02ea-4699-bf48-4d974309dc6b', 'mikko', '$2b$12$vm7naPfpNR2yL8HZmMbUUOcXGunq3q0cZXeVpLlg1qjqUujDRZ5D.', true, '2026-02-01 14:25:59.00046', '2026-02-01 14:25:59.00046');
