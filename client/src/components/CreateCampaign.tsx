@@ -19,7 +19,7 @@ import { Dropzone, IMAGE_MIME_TYPE } from "@mantine/dropzone";
 import { useForm } from "@mantine/form";
 import { DatePickerInput } from "@mantine/dates";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useState } from "react";
 import {
   IconAd,
@@ -56,6 +56,8 @@ const ctas = [
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const copiedCampaign = location.state?.campaign;
 
   const [files, setFiles] = useState<(File & { preview: string })[]>([]);
 
@@ -88,22 +90,26 @@ const CreateCampaign = () => {
 
   const form = useForm({
     initialValues: {
-      type: "AD",
-      company: "",
-      name: "",
-      payer: "",
-      budget: "",
-      budgetPeriod: "Duration",
-      startDate: null as Date | null,
-      endDate: null as Date | null,
-      targetArea: "",
-      targetDemographic: "",
-      gender: "All",
-      adTitle: "",
-      adText: "",
-      mediaInfo: "",
-      adUrl: "",
-      CTA: "Lue lisää",
+      type: copiedCampaign?.type || "AD",
+      company: copiedCampaign?.company || "",
+      name: copiedCampaign?.name || "",
+      payer: copiedCampaign?.customer || "",
+      budget: copiedCampaign?.budget ? String(copiedCampaign.budget) : "",
+      budgetPeriod: copiedCampaign?.budgetPeriod || "DURATION",
+      startDate: copiedCampaign?.start ? new Date(copiedCampaign.start) : null,
+      endDate: copiedCampaign?.end ? new Date(copiedCampaign.end) : null,
+      targetArea: copiedCampaign?.targetArea || "",
+      targetAge:
+        copiedCampaign?.targetAge &&
+        typeof copiedCampaign.targetAge === "string"
+          ? copiedCampaign.targetAge.match(/\d+/g)?.map(Number)
+          : [18, 65],
+      targetGender: copiedCampaign?.targetGender || "All",
+      adTitle: copiedCampaign?.title || "",
+      adText: copiedCampaign?.copyText || "",
+      mediaInfo: copiedCampaign?.mediaInfo || "",
+      adUrl: copiedCampaign?.url || "",
+      CTA: copiedCampaign?.cta || "Lue lisää",
     },
     validate: (values) => {
       const errors: Record<string, string> = {};
@@ -133,6 +139,7 @@ const CreateCampaign = () => {
       companyId: "659e7d23473b8d69cb77c2fb",
       type: values.type,
       company: values.company,
+      payer: values.payer,
       name: values.name,
       customer: values.payer,
       budget: Number(values.budget) || 0,
@@ -141,7 +148,10 @@ const CreateCampaign = () => {
       start: values.startDate,
       end: values.endDate,
       targetArea: values.targetArea,
-      targetAge: values.targetDemographic,
+      targetAge: Array.isArray(values.targetAge)
+        ? values.targetAge.join("-")
+        : values.targetAge,
+      targetGender: values.targetGender,
       title: values.adTitle,
       copyText: values.adText,
       url: values.adUrl,
@@ -242,7 +252,7 @@ const CreateCampaign = () => {
                 label="Sukupuoli"
                 data={genders}
                 labelProps={{ style: { whiteSpace: "nowrap" } }}
-                {...form.getInputProps("gender")}
+                {...form.getInputProps("targetGender")}
               />
               <Input.Wrapper
                 label="Ikä"
@@ -254,13 +264,13 @@ const CreateCampaign = () => {
                   min={18}
                   max={65}
                   minRange={5}
-                  defaultValue={[18, 65]}
                   marks={[
                     { value: 18, label: "18" },
                     { value: 30, label: "30" },
                     { value: 45, label: "45" },
                     { value: 65, label: "65+" },
                   ]}
+                  {...form.getInputProps("targetAge")}
                 />
               </Input.Wrapper>
             </Group>

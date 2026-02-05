@@ -1,5 +1,6 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   Container,
@@ -19,6 +20,7 @@ import {
   IconChevronDown,
   IconTrash,
   IconColumns,
+  IconCopy,
 } from "@tabler/icons-react";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
 import classes from "./campaignList.module.css";
@@ -28,6 +30,7 @@ type SortDirection = "asc" | "desc";
 type FilterType = "all" | "past" | "current" | "future";
 
 export const CampaignList = () => {
+  const navigate = useNavigate();
   const [campaigns, setCampaigns] = useState<CampaignType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -157,6 +160,16 @@ export const CampaignList = () => {
     }
   };
 
+  const handleCopy = (e: React.MouseEvent, campaign: CampaignType) => {
+    e.stopPropagation();
+    const copiedCampaign = {
+      ...campaign,
+      id: "",
+      name: `${campaign.name} (Kopio)`,
+    };
+    navigate("/new", { state: { campaign: copiedCampaign } });
+  };
+
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (window.confirm("Haluatko varmasti poistaa tämän kampanjan?")) {
@@ -240,10 +253,16 @@ export const CampaignList = () => {
           if (col.key === "actions") {
             return (
               <Table.Td key={col.key}>
-                <IconTrash
-                  className={classes.trashIcon}
-                  onClick={(e) => handleDelete(e, campaign.id)}
-                />
+                <Group gap="xs">
+                  <IconCopy
+                    style={{ cursor: "pointer" }}
+                    onClick={(e) => handleCopy(e, campaign)}
+                  />
+                  <IconTrash
+                    className={classes.trashIcon}
+                    onClick={(e) => handleDelete(e, campaign.id)}
+                  />
+                </Group>
               </Table.Td>
             );
           }
@@ -263,7 +282,9 @@ export const CampaignList = () => {
               </Table.Td>
             );
           }
-          let content: string | number = campaign[col.key as keyof CampaignType] as string | number ;
+          let content: string | number = campaign[
+            col.key as keyof CampaignType
+          ] as string | number;
           if (
             col.key === "start" ||
             col.key === "end" ||

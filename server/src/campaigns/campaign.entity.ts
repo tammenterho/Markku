@@ -35,7 +35,7 @@ export class Campaign {
   @Column({ type: 'text', nullable: true })
   copyText: string;
 
-  @Column({ type: 'varchar', length: 50, nullable: true })
+  @Column({ type: 'int4range', nullable: true })
   targetAge: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
