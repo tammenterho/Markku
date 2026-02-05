@@ -133,12 +133,16 @@ const CreateCampaign = () => {
       name: values.name,
       customer: values.payer,
       budget: Number(values.budget) || 0,
+      budgetPeriod: values.budgetPeriod,
+      mediaInfo: values.mediaInfo,
       start: values.startDate,
       end: values.endDate,
       targetArea: values.targetArea,
       targetAge: values.targetDemographic,
       title: values.adTitle,
       copyText: values.adText,
+      url: values.adUrl,
+      cta: values.CTA,
       createdBy: "",
     };
 
