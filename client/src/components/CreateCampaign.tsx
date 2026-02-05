@@ -107,18 +107,21 @@ const CreateCampaign = () => {
     },
     validate: (values) => {
       const errors: Record<string, string> = {};
-      if (!values.company) errors.company = "Pakollinen kenttä";
-      if (!values.name) errors.name = "Pakollinen kenttä";
-      if (!values.startDate) errors.startDate = "Pakollinen kenttä";
-      if (!values.adText) errors.adText = "Pakollinen kenttä";
+      const requiredFields = ["company", "name", "startDate", "adText"];
+      const adRequiredFields = ["payer", "budget", "endDate", "targetArea", "adTitle", "adUrl"];
+
+      requiredFields.forEach((field) => {
+        if (!values[field as keyof typeof values]) {
+          errors[field] = "Pakollinen kenttä";
+        }
+      });
 
       if (values.type === "AD") {
-        if (!values.payer) errors.payer = "Pakollinen kenttä";
-        if (!values.budget) errors.budget = "Pakollinen kenttä";
-        if (!values.endDate) errors.endDate = "Pakollinen kenttä";
-        if (!values.targetArea) errors.targetArea = "Pakollinen kenttä";
-        if (!values.adTitle) errors.adTitle = "Pakollinen kenttä";
-        if (!values.adUrl) errors.adUrl = "Pakollinen kenttä";
+        adRequiredFields.forEach((field) => {
+          if (!values[field as keyof typeof values]) {
+            errors[field] = "Pakollinen kenttä";
+          }
+        });
       }
       return errors;
     },
