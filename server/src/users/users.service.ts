@@ -26,8 +26,9 @@ export class UsersService {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) return null;
     user.companies = user.companies || [];
-    if (!user.companies.includes(companyId)) {
-      user.companies.push(companyId);
+    const cleanId = (companyId || '').replace(/["\\]/g, '').trim();
+    if (!user.companies.includes(cleanId)) {
+      user.companies.push(cleanId);
       await this.usersRepository.save(user);
     }
     return user;
@@ -40,8 +41,9 @@ export class UsersService {
     const user = await this.usersRepository.findOne({ where: { username } });
     if (!user) return null;
     user.companies = user.companies || [];
-    if (!user.companies.includes(companyId)) {
-      user.companies.push(companyId);
+    const cleanId = (companyId || '').replace(/["\\]/g, '').trim();
+    if (!user.companies.includes(cleanId)) {
+      user.companies.push(cleanId);
       await this.usersRepository.save(user);
     }
     return user;

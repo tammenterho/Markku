@@ -24,6 +24,7 @@ const Settings = () => {
   const [userCompanies, setUserCompanies] = useState<
     { id: string; name: string }[]
   >([]);
+  const [joinCompanyId, setJoinCompanyId] = useState("");
 
   useEffect(() => {
     const fetchUserCompanies = async () => {
@@ -107,6 +108,53 @@ const Settings = () => {
             ))}
           </ul>
         )}
+        <Stack align="flex-start" mt="md">
+          <Title order={5}>Yhdistä yritys</Title>
+          <Group>
+            <TextInput
+              placeholder="Anna yrityksen UUID"
+              value={joinCompanyId}
+              onChange={(e) => setJoinCompanyId(e.currentTarget.value)}
+            />
+            <Button
+              onClick={async () => {
+                const username = getUsernameFromToken(
+                  localStorage.getItem("accessToken"),
+                );
+                if (!username) {
+                  alert("Et ole kirjautunut sisään");
+                  return;
+                }
+                if (!joinCompanyId) {
+                  alert("Syötä yrityksen UUID");
+                  return;
+                }
+                try {
+                  const cleanId = joinCompanyId.replace(/["]|\\/g, "").trim();
+                  const res = await axios.post(
+                    `http://localhost:3000/users/${username}/companies`,
+                    { companyId: cleanId },
+                  );
+                  // fetch company details to display
+                  const comp = await axios.get(
+                    `http://localhost:3000/companies/${joinCompanyId}`,
+                  );
+                  setUserCompanies((prev) => [
+                    ...prev,
+                    { id: comp.data.id, name: comp.data.name },
+                  ]);
+                  setJoinCompanyId("");
+                  alert("Yritys yhdistetty onnistuneesti");
+                } catch (err) {
+                  console.error("Error joining company:", err);
+                  alert("Yrityksen yhdistäminen epäonnistui");
+                }
+              }}
+            >
+              Yhdistä
+            </Button>
+          </Group>
+        </Stack>
       </Stack>
     </div>
   );
