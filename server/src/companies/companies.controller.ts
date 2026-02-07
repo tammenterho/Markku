@@ -27,20 +27,17 @@ export class CompaniesController {
   async findOne(@Param('id') id: string): Promise<Company | null> {
     return this.companiesService.findOne(id);
   }
+
   @Post()
-  async create(
-    @Body() company: Partial<Company> & { creatorUsername?: string },
-  ) {
+  async create(@Body() company: Partial<Company> & { creatorId?: string }) {
     const created = await this.companiesService.create(company);
-    // if creatorUsername provided, append company id to user's companies
-    if (company.creatorUsername) {
+    if (company.creatorId) {
       try {
-        await this.usersService.addCompanyToUserByUsername(
-          company.creatorUsername,
+        await this.usersService.addCompanyToUserById(
+          company.creatorId,
           created.id,
         );
       } catch (err) {
-        // log and continue
         console.error('Error adding company to user:', err);
       }
     }

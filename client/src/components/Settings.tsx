@@ -1,71 +1,59 @@
 import {
+  Button,
   Center,
+  Group,
+  Paper,
   SegmentedControl,
   Stack,
+  Text,
+  TextInput,
+  Title,
   useComputedColorScheme,
   useMantineColorScheme,
-  TextInput,
-  Button,
-  Title,
-  Group,
-  Text,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import axios from "axios";
-import { getUsernameFromToken } from "../utils/auth";
+import { getUserIdFromToken } from "../utils/auth";
 import { useEffect, useState } from "react";
 import { IconMoon, IconSun } from "@tabler/icons-react";
+
+const apiBase = "http://localhost:3000";
 
 const Settings = () => {
   const { setColorScheme } = useMantineColorScheme();
   const computedColorScheme = useComputedColorScheme("dark", {
     getInitialValueInEffect: true,
   });
+
   const [userCompanies, setUserCompanies] = useState<
     { id: string; name: string }[]
   >([]);
-  const [joinCompanyId, setJoinCompanyId] = useState("");
+
+  const fetchUserCompanies = async () => {
+    const userId = getUserIdFromToken(localStorage.getItem("accessToken"));
+    if (!userId) return;
+    try {
+      const res = await axios.get(`${apiBase}/users/${userId}/companies`);
+      setUserCompanies(
+        (res.data || []).map((c: any) => ({ id: c.id, name: c.name })),
+      );
+    } catch (err) {
+      console.error("Error fetching user companies:", err);
+    }
+  };
 
   useEffect(() => {
-    const fetchUserCompanies = async () => {
-      const username = getUsernameFromToken(
-        localStorage.getItem("accessToken"),
-      );
-      if (!username) return;
-      try {
-        const userRes = await axios.get(
-          `http://localhost:3000/users/${username}`,
-        );
-        const ids: string[] = userRes.data?.companies || [];
-        if (ids.length === 0) {
-          setUserCompanies([]);
-          return;
-        }
-        const comps = await Promise.all(
-          ids.map((id) =>
-            axios
-              .get(`http://localhost:3000/companies/${id}`)
-              .then((r) => r.data),
-          ),
-        );
-        setUserCompanies(comps.map((c: any) => ({ id: c.id, name: c.name })));
-      } catch (err) {
-        console.error("Error fetching user companies:", err);
-      }
-    };
     fetchUserCompanies();
   }, []);
 
   return (
     <div>
-      <h1>Asetukset</h1>
-      <Stack align="flex-start">
-        <h2>Ulkoasu</h2>
+      <Title order={2}>Asetukset</Title>
+      <Stack align="flex-start" mt="md">
+        <Title order={4}>Ulkoasu</Title>
         <SegmentedControl
           value={computedColorScheme}
-          onChange={() =>
-            setColorScheme(computedColorScheme === "dark" ? "light" : "dark")
-          }
+          onChange={(val) => setColorScheme(val as "dark" | "light")}
           radius="xl"
           size="md"
           data={[
@@ -91,12 +79,23 @@ const Settings = () => {
         />
       </Stack>
 
-      <Stack align="flex-start" mt="md">
-        <Title order={4}>Luo yritystieto</Title>
-        <CompanyForm />
-      </Stack>
-      <Stack align="flex-start" mt="md">
-        <Title order={5}>Omat yritykset</Title>
+      <Stack align="flex-start" mt="lg">
+        <Title order={4}>Yritykset</Title>
+        <Stack align="flex-start">
+          <Title order={5} mb="sm">
+            Luo yritys
+          </Title>
+          <CompanyActionForm mode="create" onSuccess={fetchUserCompanies} />
+
+          <Title order={5} mb="sm">
+            Yhdistä yritys
+          </Title>
+          <CompanyActionForm mode="join" onSuccess={fetchUserCompanies} />
+        </Stack>
+
+        <Title order={5} mb="sm">
+          Omat yritykset
+        </Title>
         {userCompanies.length === 0 ? (
           <Text c="dimmed">Ei yrityksiä</Text>
         ) : (
@@ -108,92 +107,74 @@ const Settings = () => {
             ))}
           </ul>
         )}
-        <Stack align="flex-start" mt="md">
-          <Title order={5}>Yhdistä yritys</Title>
-          <Group>
-            <TextInput
-              placeholder="Anna yrityksen UUID"
-              value={joinCompanyId}
-              onChange={(e) => setJoinCompanyId(e.currentTarget.value)}
-            />
-            <Button
-              onClick={async () => {
-                const username = getUsernameFromToken(
-                  localStorage.getItem("accessToken"),
-                );
-                if (!username) {
-                  alert("Et ole kirjautunut sisään");
-                  return;
-                }
-                if (!joinCompanyId) {
-                  alert("Syötä yrityksen UUID");
-                  return;
-                }
-                try {
-                  const cleanId = joinCompanyId.replace(/["]|\\/g, "").trim();
-                  const res = await axios.post(
-                    `http://localhost:3000/users/${username}/companies`,
-                    { companyId: cleanId },
-                  );
-                  // fetch company details to display
-                  const comp = await axios.get(
-                    `http://localhost:3000/companies/${joinCompanyId}`,
-                  );
-                  setUserCompanies((prev) => [
-                    ...prev,
-                    { id: comp.data.id, name: comp.data.name },
-                  ]);
-                  setJoinCompanyId("");
-                  alert("Yritys yhdistetty onnistuneesti");
-                } catch (err) {
-                  console.error("Error joining company:", err);
-                  alert("Yrityksen yhdistäminen epäonnistui");
-                }
-              }}
-            >
-              Yhdistä
-            </Button>
-          </Group>
-        </Stack>
       </Stack>
     </div>
   );
 };
 
-const CompanyForm = () => {
+type CompanyActionMode = "create" | "join";
+
+const CompanyActionForm = ({
+  mode,
+  onSuccess,
+}: {
+  mode: CompanyActionMode;
+  onSuccess?: () => void;
+}) => {
   const form = useForm({
     initialValues: {
-      name: "",
+      input: "",
     },
   });
 
   const handleSubmit = async (values: typeof form.values) => {
+    const userId = getUserIdFromToken(localStorage.getItem("accessToken"));
+    if (!userId) {
+      alert("Et ole kirjautunut sisään");
+      return;
+    }
+
     try {
-      const username = getUsernameFromToken(
-        localStorage.getItem("accessToken"),
-      );
-      const res = await axios.post("http://localhost:3000/companies", {
-        name: values.name,
-        creatorUsername: username,
-      });
-      // show created id or name
-      alert(`Yritys luotu: ${res.data.name} (${res.data.id})`);
-      form.setValues({ name: "" });
+      if (mode === "create") {
+        const res = await axios.post(`${apiBase}/companies`, {
+          name: values.input,
+          creatorId: userId,
+        });
+        alert(`Yritys luotu: ${res.data.name} (${res.data.id})`);
+        console.log("Company created:", values.input);
+      } else {
+        if (!values.input) {
+          alert("Syötä yrityksen UUID");
+          return;
+        }
+        const cleanId = values.input.replace(/["\\]/g, "").trim();
+        await axios.post(`${apiBase}/users/${userId}/companies`, {
+          companyId: cleanId,
+        });
+        const comp = await axios.get(`${apiBase}/companies/${cleanId}`);
+        alert(`Yritys yhdistetty: ${comp.data.name} (${comp.data.id})`);
+      }
+      form.setValues({ input: "" });
+      onSuccess?.();
     } catch (err) {
-      console.error("Error creating company:", err);
-      alert("Yrityksen luominen epäonnistui. Katso konsoli.");
+      console.error("Company action error:", err);
+      alert("Toiminto epäonnistui. Katso konsoli.");
     }
   };
 
   return (
     <form onSubmit={form.onSubmit(handleSubmit)}>
-      <Group>
+      <Group align="flex-end">
         <TextInput
-          label="Yrityksen nimi"
-          {...form.getInputProps("name")}
+          w={"20rem"}
+          label={mode === "create" ? "Yrityksen nimi" : "Yrityksen UUID"}
+          placeholder={
+            mode === "create" ? "Anna yrityksen nimi" : "Anna yrityksen UUID"
+          }
+          {...form.getInputProps("input")}
           required
         />
-        <Button type="submit">Luo yritys</Button>
+        <Button type="submit">{mode === "create" ? "Luo" : "Yhdistä"}</Button>
       </Group>
     </form>
   );
