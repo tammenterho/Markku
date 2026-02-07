@@ -114,7 +114,14 @@ const CreateCampaign = () => {
     validate: (values) => {
       const errors: Record<string, string> = {};
       const requiredFields = ["company", "name", "startDate", "adText"];
-      const adRequiredFields = ["payer", "budget", "endDate", "targetArea", "adTitle", "adUrl"];
+      const adRequiredFields = [
+        "payer",
+        "budget",
+        "endDate",
+        "targetArea",
+        "adTitle",
+        "adUrl",
+      ];
 
       requiredFields.forEach((field) => {
         if (!values[field as keyof typeof values]) {
@@ -149,7 +156,7 @@ const CreateCampaign = () => {
       end: values.endDate,
       targetArea: values.targetArea,
       targetAge: Array.isArray(values.targetAge)
-        ? values.targetAge.join("-")
+        ? `[${values.targetAge[0]},${values.targetAge[1]}]`
         : values.targetAge,
       targetGender: values.targetGender,
       title: values.adTitle,

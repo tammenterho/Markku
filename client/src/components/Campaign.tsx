@@ -97,6 +97,11 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
 
   useEffect(() => {
     if (campaign) {
+      const parseRangeToDisplay = (r: string) => {
+        const nums = r.match(/\d+/g);
+        return nums && nums.length >= 2 ? `${nums[0]}-${nums[1]}` : r;
+      };
+
       form.setValues({
         company: campaign.company,
         customer: campaign.customer,
@@ -107,7 +112,10 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
         mediaInfo: campaign.mediaInfo,
         url: campaign.url,
         cta: campaign.cta,
-        targetAge: campaign.targetAge,
+        targetAge:
+          typeof campaign.targetAge === "string"
+            ? parseRangeToDisplay(campaign.targetAge)
+            : campaign.targetAge,
         targetGender: campaign.targetGender,
         targetArea: campaign.targetArea,
         budget: campaign.budget,
@@ -122,9 +130,20 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
     if (!campaign) return;
 
     try {
+      const payload = { ...values } as any;
+      if (typeof values.targetAge === "string") {
+        const m = values.targetAge.match(/^(\d+)-(\d+)$/);
+        if (m) {
+          const lower = Number(m[1]);
+          const upper = Number(m[2]);
+          // convert to int4range string, using exclusive upper bound like '[lower,upper)'
+          payload.targetAge = `[${lower},${upper})`;
+        }
+      }
+
       await axios.patch(
         `http://localhost:3000/campaigns/${campaign.id}`,
-        values,
+        payload,
       );
       onUpdate();
       onClose();
