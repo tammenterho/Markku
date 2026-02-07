@@ -12,6 +12,8 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import axios from "axios";
+import { getUsernameFromToken } from "../utils/auth";
+import { useEffect, useState } from "react";
 import { IconMoon, IconSun } from "@tabler/icons-react";
 
 const Settings = () => {
@@ -19,6 +21,40 @@ const Settings = () => {
   const computedColorScheme = useComputedColorScheme("dark", {
     getInitialValueInEffect: true,
   });
+  const [userCompanies, setUserCompanies] = useState<
+    { id: string; name: string }[]
+  >([]);
+
+  useEffect(() => {
+    const fetchUserCompanies = async () => {
+      const username = getUsernameFromToken(
+        localStorage.getItem("accessToken"),
+      );
+      if (!username) return;
+      try {
+        const userRes = await axios.get(
+          `http://localhost:3000/users/${username}`,
+        );
+        const ids: string[] = userRes.data?.companies || [];
+        if (ids.length === 0) {
+          setUserCompanies([]);
+          return;
+        }
+        const comps = await Promise.all(
+          ids.map((id) =>
+            axios
+              .get(`http://localhost:3000/companies/${id}`)
+              .then((r) => r.data),
+          ),
+        );
+        setUserCompanies(comps.map((c: any) => ({ id: c.id, name: c.name })));
+      } catch (err) {
+        console.error("Error fetching user companies:", err);
+      }
+    };
+    fetchUserCompanies();
+  }, []);
+
   return (
     <div>
       <h1>Asetukset</h1>
@@ -58,6 +94,20 @@ const Settings = () => {
         <Title order={4}>Luo yritystieto</Title>
         <CompanyForm />
       </Stack>
+      <Stack align="flex-start" mt="md">
+        <Title order={5}>Omat yritykset</Title>
+        {userCompanies.length === 0 ? (
+          <Text c="dimmed">Ei yrityksiä</Text>
+        ) : (
+          <ul>
+            {userCompanies.map((c) => (
+              <li key={c.id}>
+                {c.name} — {c.id}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Stack>
     </div>
   );
 };
@@ -71,8 +121,12 @@ const CompanyForm = () => {
 
   const handleSubmit = async (values: typeof form.values) => {
     try {
+      const username = getUsernameFromToken(
+        localStorage.getItem("accessToken"),
+      );
       const res = await axios.post("http://localhost:3000/companies", {
         name: values.name,
+        creatorUsername: username,
       });
       // show created id or name
       alert(`Yritys luotu: ${res.data.name} (${res.data.id})`);

@@ -18,4 +18,32 @@ export class UsersService {
     const user = this.usersRepository.create({ username, passwordHash });
     return this.usersRepository.save(user);
   }
+
+  async addCompanyToUserById(
+    userId: string,
+    companyId: string,
+  ): Promise<User | null> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) return null;
+    user.companies = user.companies || [];
+    if (!user.companies.includes(companyId)) {
+      user.companies.push(companyId);
+      await this.usersRepository.save(user);
+    }
+    return user;
+  }
+
+  async addCompanyToUserByUsername(
+    username: string,
+    companyId: string,
+  ): Promise<User | null> {
+    const user = await this.usersRepository.findOne({ where: { username } });
+    if (!user) return null;
+    user.companies = user.companies || [];
+    if (!user.companies.includes(companyId)) {
+      user.companies.push(companyId);
+      await this.usersRepository.save(user);
+    }
+    return user;
+  }
 }

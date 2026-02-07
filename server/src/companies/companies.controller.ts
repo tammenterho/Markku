@@ -9,10 +9,14 @@ import {
 } from '@nestjs/common';
 import { CompaniesService } from './companies.service';
 import { Company } from './companies.entity';
+import { UsersService } from '../users/users.service';
 
 @Controller('companies')
 export class CompaniesController {
-  constructor(private readonly companiesService: CompaniesService) {}
+  constructor(
+    private readonly companiesService: CompaniesService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Get()
   async findAll(): Promise<Company[]> {
@@ -23,10 +27,24 @@ export class CompaniesController {
   async findOne(@Param('id') id: string): Promise<Company | null> {
     return this.companiesService.findOne(id);
   }
-
   @Post()
-  create(@Body() company: Partial<Company>) {
-    return this.companiesService.create(company);
+  async create(
+    @Body() company: Partial<Company> & { creatorUsername?: string },
+  ) {
+    const created = await this.companiesService.create(company);
+    // if creatorUsername provided, append company id to user's companies
+    if (company.creatorUsername) {
+      try {
+        await this.usersService.addCompanyToUserByUsername(
+          company.creatorUsername,
+          created.id,
+        );
+      } catch (err) {
+        // log and continue
+        console.error('Error adding company to user:', err);
+      }
+    }
+    return created;
   }
 
   @Patch(':id')

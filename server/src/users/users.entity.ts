@@ -17,6 +17,9 @@ export class User {
   @Column()
   passwordHash: string;
 
+  @Column('text', { array: true, nullable: true })
+  companies: string[];
+
   @Column({ default: true })
   isActive: boolean;
 
