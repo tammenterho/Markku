@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
 import { UsersModule } from './users/users.module';
+import { CompaniesModule } from './companies/companies.module';
 
 @Module({
   imports: [
@@ -22,6 +23,7 @@ import { UsersModule } from './users/users.module';
     CampaignsModule,
     AuthModule,
     UsersModule,
+    CompaniesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

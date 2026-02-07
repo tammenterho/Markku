@@ -68,3 +68,28 @@ INSERT INTO "users" (
 ) VALUES 
   ('849d9aa3-379c-4cf1-b7bc-206fcc849763', 'leevi', '$2b$12$6ZbsNcrEpiU02ukkNB.geehjgpjfa6j9/cWjjT6dsLDo9cUSn9k52', true, '2026-02-01 14:24:43.314544', '2026-02-01 14:24:43.314544'),
   ('be6972a7-02ea-4699-bf48-4d974309dc6b', 'mikko', '$2b$12$vm7naPfpNR2yL8HZmMbUUOcXGunq3q0cZXeVpLlg1qjqUujDRZ5D.', true, '2026-02-01 14:25:59.00046', '2026-02-01 14:25:59.00046');
+
+  DO $$
+BEGIN
+  RAISE NOTICE 'Creating users table...';
+END $$;
+
+CREATE TABLE IF NOT EXISTS "companies" (
+  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "name" character varying NOT NULL,
+  "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
+  "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
+  CONSTRAINT "PK_companies_id" PRIMARY KEY ("id"),
+  CONSTRAINT "UQ_companies_name" UNIQUE ("name")
+);
+
+DO $$
+BEGIN
+  RAISE NOTICE 'Companies table created';
+END $$;
+
+INSERT INTO "companies" (
+  "id", "name", "createdAt", "updatedAt"
+) VALUES 
+  ('849d9aa3-379c-4cf1-b7bc-206fcc849763', 'M&M Kuntotalo', '2026-02-01 14:24:43.314544', '2026-02-01 14:24:43.314544'),
+  ('be6972a7-02ea-4699-bf48-4d974309dc6b', 'Keski-Suomen Kuntatalo', '2026-02-01 14:25:59.00046', '2026-02-01 14:25:59.00046');
