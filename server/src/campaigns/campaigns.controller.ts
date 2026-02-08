@@ -7,14 +7,18 @@ import {
   Patch,
   Post,
   Req,
+  Logger,
 } from '@nestjs/common';
 import { CampaignsService } from './campaigns.service';
 import { Campaign } from './campaign.entity';
 import { UsersService } from '../users/users.service';
 import type { Request } from 'express';
+import { USER_ID_HEADER } from '../common/constants';
 
 @Controller('campaigns')
 export class CampaignsController {
+  private readonly logger = new Logger(CampaignsController.name);
+
   constructor(
     private readonly campaignsService: CampaignsService,
     private readonly usersService: UsersService,
@@ -23,10 +27,13 @@ export class CampaignsController {
   @Get()
   async findAll(@Req() req: Request): Promise<Campaign[]> {
     // Käyttäjän uuid headerissa
-    const userId = req.headers['x-user-id'] as string;
-    if (!userId) return [];
+    const userId = req.headers[USER_ID_HEADER] as string;
+    if (!userId) {
+      this.logger.warn('No user ID provided in request');
+      return [];
+    }
     const user = await this.usersService.findById(userId);
-    console.log(
+    this.logger.log(
       `User found for campaigns: ${user?.username}, companies: ${user?.companies}`,
     );
     if (!user || !user.companies) return [];
@@ -40,7 +47,7 @@ export class CampaignsController {
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() campaign: Partial<Campaign>) {
-    console.log('UPDATING');
+    this.logger.log(`Updating campaign ${id}`);
     return this.campaignsService.update(id, campaign);
   }
 

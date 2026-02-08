@@ -13,6 +13,7 @@ import {
 import { useForm } from "@mantine/form";
 import { IconLogin } from "@tabler/icons-react";
 import axios from "axios";
+import { API_BASE_URL, STORAGE_KEYS } from "../utils/constants";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -37,27 +38,30 @@ const Login = () => {
     setError(null);
 
     try {
-      const response = await axios.post("http://localhost:3000/auth/signin", {
+      const response = await axios.post(`${API_BASE_URL}/auth/signin`, {
         username: values.username,
         password: values.password,
       });
 
       if (response.data.accessToken) {
-        localStorage.setItem("accessToken", response.data.accessToken);
+        localStorage.setItem(
+          STORAGE_KEYS.ACCESS_TOKEN,
+          response.data.accessToken,
+        );
 
         // Hae käyttäjän tiedot ja tallenna companies localStorageen
         try {
           const userResponse = await axios.get(
-            `http://localhost:3000/users/${values.username}`,
+            `${API_BASE_URL}/users/${values.username}`,
           );
           if (userResponse.data.companies) {
             localStorage.setItem(
-              "userCompanies",
+              STORAGE_KEYS.USER_COMPANIES,
               JSON.stringify(userResponse.data.companies),
             );
           }
           if (userResponse.data.id) {
-            localStorage.setItem("userId", userResponse.data.id);
+            localStorage.setItem(STORAGE_KEYS.USER_ID, userResponse.data.id);
           }
         } catch (err) {
           console.error("Error fetching user data:", err);

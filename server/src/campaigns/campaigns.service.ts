@@ -1,17 +1,32 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DeleteResult, Repository, UpdateResult, DataSource } from 'typeorm';
 import { Campaign } from './campaign.entity';
-import { AppDataSource } from '../data-source';
+import { TENANT_PREFIX, CAMPAIGN_ALLOWED_FIELDS } from '../common/constants';
 
 @Injectable()
 export class CampaignsService {
+  private readonly logger = new Logger(CampaignsService.name);
+
   constructor(
     @InjectRepository(Campaign)
     private readonly campaignRepository: Repository<Campaign>,
-    // Käytetään suoraan AppDataSource, koska dependency injection ei ole käytössä
-    private readonly dataSource: DataSource = AppDataSource,
+    private readonly dataSource: DataSource,
   ) {}
+
+  private async getCompanyByLinkId(
+    linkId: string,
+  ): Promise<{ id: number } | null> {
+    const result = await this.dataSource.query(
+      'SELECT id FROM companies WHERE "linkId" = $1',
+      [linkId],
+    );
+    return result[0] || null;
+  }
+
+  private getSchemaName(companyId: number): string {
+    return `${TENANT_PREFIX}${companyId}`;
+  }
 
   async findAll(): Promise<Campaign[]> {
     return this.campaignRepository.find();
@@ -19,52 +34,73 @@ export class CampaignsService {
 
   // Hakee kaikki kampanjat annetun companyId-listan (uuid, linkId) perusteella
   async findAllByCompanyIds(companyIds: string[]): Promise<Campaign[]> {
-    console.log('findAllByCompanyIds called with:', companyIds);
+    this.logger.log(`Fetching campaigns for ${companyIds.length} companies`);
     const allCampaigns: Campaign[] = [];
+
     for (const companyId of companyIds) {
-      // companyId on uuid (linkId), haetaan companies-taulusta id (serial)
-      const company = await this.dataSource.query(
-        'SELECT id FROM companies WHERE "linkId" = $1',
-        [companyId],
-      );
-      console.log(`Company lookup for linkId ${companyId}:`, company);
-      if (!company[0]) continue;
-      const schema = `tenant_${company[0].id}`;
-      console.log(`Querying schema: ${schema}`);
+      const company = await this.getCompanyByLinkId(companyId);
+      if (!company) {
+        this.logger.warn(`Company not found for linkId: ${companyId}`);
+        continue;
+      }
+
+      const schema = this.getSchemaName(company.id);
       try {
         const rows = await this.dataSource.query(
           `SELECT * FROM "${schema}".campaigns`,
         );
-        console.log(`Found ${rows.length} campaigns in ${schema}`);
+        this.logger.log(`Found ${rows.length} campaigns in ${schema}`);
         allCampaigns.push(...rows);
-      } catch (e) {
-        console.error(`Error querying ${schema}:`, e);
-        // Skeemaa/taulua ei ole, ohita
+      } catch (error) {
+        this.logger.error(`Error querying ${schema}: ${error.message}`);
       }
     }
-    console.log(`Total campaigns found: ${allCampaigns.length}`);
+
     return allCampaigns;
   }
 
-  async create(campaignData: Partial<Campaign>): Promise<any> {
-    // Hae company, jonka linkId = campaignData.companyId
-    const company = await this.dataSource.query(
-      'SELECT id FROM companies WHERE "linkId" = $1',
-      [campaignData.companyId],
+  async create(campaignData: Partial<Campaign>): Promise<Campaign> {
+    if (!campaignData.companyId) {
+      throw new Error('Company ID is required');
+    }
+
+    const company = await this.getCompanyByLinkId(campaignData.companyId);
+    if (!company) {
+      throw new NotFoundException(
+        `Company not found for linkId: ${campaignData.companyId}`,
+      );
+    }
+
+    this.logger.log(`Creating campaign in company ${company.id}`);
+    const schema = this.getSchemaName(company.id);
+
+    // Validoi ja filtteröi kentät
+    const allowedFields = CAMPAIGN_ALLOWED_FIELDS as readonly string[];
+    const fields = Object.keys(campaignData).filter((key) =>
+      allowedFields.includes(key),
     );
-    console.log('Company found for campaign:', company);
-    if (!company[0]) throw new Error('Company not found');
-    const schema = `tenant_${company[0].id}`;
-    // Luo insert-lause dynaamisesti
-    const fields = Object.keys(campaignData);
-    const values = Object.values(campaignData);
+    const values = fields.map((key) => campaignData[key]);
+
+    if (fields.length === 0) {
+      throw new Error('No valid fields provided');
+    }
+
     const columns = fields.map((f) => `"${f}"`).join(', ');
     const params = fields.map((_, i) => `$${i + 1}`).join(', ');
-    const result = await this.dataSource.query(
-      `INSERT INTO "${schema}".campaigns (${columns}) VALUES (${params}) RETURNING *`,
-      values,
-    );
-    return result[0];
+
+    try {
+      const result = await this.dataSource.query(
+        `INSERT INTO "${schema}".campaigns (${columns}) VALUES (${params}) RETURNING *`,
+        values,
+      );
+      this.logger.log(`Campaign created successfully in ${schema}`);
+      return result[0];
+    } catch (error) {
+      this.logger.error(
+        `Error creating campaign in ${schema}: ${error.message}`,
+      );
+      throw error;
+    }
   }
 
   async update(

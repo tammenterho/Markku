@@ -24,6 +24,7 @@ import {
 } from "@tabler/icons-react";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
 import classes from "./campaignList.module.css";
+import { API_BASE_URL, STORAGE_KEYS, USER_ID_HEADER } from "../utils/constants";
 
 type SortKey = keyof CampaignType | null;
 type SortDirection = "asc" | "desc";
@@ -75,18 +76,13 @@ export const CampaignList = () => {
     setLoading(true);
 
     // Hae käyttäjän id localStoragesta
-    const userId = localStorage.getItem("userId");
-    const userCompanies = localStorage.getItem("userCompanies");
-    
-    console.log("Fetching campaigns with userId:", userId);
-    console.log("User companies from localStorage:", userCompanies);
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
 
     axios
-      .get("http://localhost:3000/campaigns", {
-        headers: userId ? { "x-user-id": userId } : {},
+      .get(`${API_BASE_URL}/campaigns`, {
+        headers: userId ? { [USER_ID_HEADER]: userId } : {},
       })
       .then((response) => {
-        console.log("Campaigns response:", response.data);
         setCampaigns(response.data);
         setLoading(false);
       })

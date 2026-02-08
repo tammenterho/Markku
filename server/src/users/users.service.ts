@@ -1,10 +1,12 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './users.entity';
 
 @Injectable()
 export class UsersService {
+  private readonly logger = new Logger(UsersService.name);
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -27,7 +29,7 @@ export class UsersService {
     userId: string,
     companyId: string,
   ): Promise<User | null> {
-    console.log(`Adding company ${companyId} to user ${userId}`);
+    this.logger.log(`Adding company ${companyId} to user ${userId}`);
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) return null;
     user.companies = user.companies || [];
