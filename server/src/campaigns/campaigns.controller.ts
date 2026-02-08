@@ -46,13 +46,38 @@ export class CampaignsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() campaign: Partial<Campaign>) {
+  async update(
+    @Param('id') id: string,
+    @Body() campaign: Partial<Campaign>,
+    @Req() req: Request,
+  ) {
     this.logger.log(`Updating campaign ${id}`);
-    return this.campaignsService.update(id, campaign);
+    this.logger.log(`Headers: ${JSON.stringify(req.headers)}`);
+    const userId = req.headers[USER_ID_HEADER] as string;
+    this.logger.log(`User ID from header: ${userId}`);
+
+    if (!userId) {
+      this.logger.error('User ID not found in headers');
+      throw new Error('User ID required');
+    }
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.companies) {
+      throw new Error('User or companies not found');
+    }
+    return this.campaignsService.update(id, campaign, user.companies);
   }
 
   @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.campaignsService.remove(id);
+  async delete(@Param('id') id: string, @Req() req: Request) {
+    this.logger.log(`Deleting campaign ${id}`);
+    const userId = req.headers[USER_ID_HEADER] as string;
+    if (!userId) {
+      throw new Error('User ID required');
+    }
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.companies) {
+      throw new Error('User or companies not found');
+    }
+    return this.campaignsService.remove(id, user.companies);
   }
 }

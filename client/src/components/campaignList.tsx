@@ -152,10 +152,16 @@ export const CampaignList = () => {
   ) => {
     e.stopPropagation();
     const newStatus = !campaignToUpdate.status;
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+
+    console.log("Updating campaign, userId:", userId);
+    console.log("Headers:", { [USER_ID_HEADER]: userId });
+
     try {
       await axios.patch(
-        `http://localhost:3000/campaigns/${campaignToUpdate.id}`,
+        `${API_BASE_URL}/campaigns/${campaignToUpdate.id}`,
         { status: newStatus },
+        { headers: userId ? { [USER_ID_HEADER]: userId } : {} },
       );
       setCampaigns(
         campaigns.map((c) =>
@@ -180,8 +186,12 @@ export const CampaignList = () => {
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (window.confirm("Haluatko varmasti poistaa tämän kampanjan?")) {
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+
       try {
-        await axios.delete(`http://localhost:3000/campaigns/${id}`);
+        await axios.delete(`${API_BASE_URL}/campaigns/${id}`, {
+          headers: userId ? { [USER_ID_HEADER]: userId } : {},
+        });
         setCampaigns(campaigns.filter((c) => c.id !== id));
       } catch (error) {
         console.error("Error deleting campaign:", error);

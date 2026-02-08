@@ -14,6 +14,7 @@ import { DatePickerInput } from "@mantine/dates";
 import { useEffect } from "react";
 import { Title } from "@mantine/core";
 import axios from "axios";
+import { USER_ID_HEADER, STORAGE_KEYS } from "../utils/constants";
 
 export type CampaignType = "AD" | "POST";
 export type BudgetPeriod = "DAY" | "DURATION";
@@ -130,6 +131,7 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
     if (!campaign) return;
 
     try {
+      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
       const payload = { ...values } as any;
       if (typeof values.targetAge === "string") {
         const m = values.targetAge.match(/^(\d+)-(\d+)$/);
@@ -144,6 +146,9 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
       await axios.patch(
         `http://localhost:3000/campaigns/${campaign.id}`,
         payload,
+        {
+          headers: userId ? { [USER_ID_HEADER]: userId } : {},
+        },
       );
       onUpdate();
       onClose();
