@@ -14,22 +14,24 @@ export class CompaniesService {
     return this.companyRepository.find();
   }
 
-  async findOne(id: string): Promise<Company | null> {
-    return this.companyRepository.findOne({ where: { id } });
+  async findOne(linkId: string): Promise<Company | null> {
+    return this.companyRepository.findOne({ where: { linkId } });
   }
 
   async create(companyData: Partial<Company>): Promise<Company> {
-    return this.companyRepository.save(companyData);
+    // Remove linkId if present, so DB generates it
+    const { linkId, ...data } = companyData;
+    return this.companyRepository.save(data);
   }
 
   async update(
-    id: string,
+    linkId: string,
     companyData: Partial<Company>,
   ): Promise<UpdateResult> {
-    return this.companyRepository.update(id, companyData);
+    return this.companyRepository.update({ linkId }, companyData);
   }
 
-  async remove(id: string): Promise<DeleteResult> {
-    return this.companyRepository.delete(id);
+  async remove(linkId: string): Promise<DeleteResult> {
+    return this.companyRepository.delete({ linkId });
   }
 }

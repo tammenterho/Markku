@@ -2,7 +2,6 @@ import {
   Button,
   Center,
   Group,
-  Paper,
   SegmentedControl,
   Stack,
   Text,
@@ -35,7 +34,7 @@ const Settings = () => {
     try {
       const res = await axios.get(`${apiBase}/users/${userId}/companies`);
       setUserCompanies(
-        (res.data || []).map((c: any) => ({ id: c.id, name: c.name })),
+        (res.data || []).map((c: any) => ({ id: c.linkId, name: c.name })),
       );
     } catch (err) {
       console.error("Error fetching user companies:", err);

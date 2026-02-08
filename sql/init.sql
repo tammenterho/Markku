@@ -75,12 +75,13 @@ BEGIN
 END $$;
 
 CREATE TABLE IF NOT EXISTS "companies" (
-  "id" uuid NOT NULL DEFAULT gen_random_uuid(),
+  "id" SERIAL PRIMARY KEY,
+  "linkId" uuid NOT NULL DEFAULT gen_random_uuid(),
   "name" character varying NOT NULL,
   "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
   "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
-  CONSTRAINT "PK_companies_id" PRIMARY KEY ("id"),
-  CONSTRAINT "UQ_companies_name" UNIQUE ("name")
+  CONSTRAINT "UQ_companies_name" UNIQUE ("name"),
+  CONSTRAINT "UQ_companies_linkId" UNIQUE ("linkId")
 );
 
 DO $$
@@ -89,7 +90,7 @@ BEGIN
 END $$;
 
 INSERT INTO "companies" (
-  "id", "name", "createdAt", "updatedAt"
+  "linkId", "name", "createdAt", "updatedAt"
 ) VALUES 
   ('849d9aa3-379c-4cf1-b7bc-206fcc849763', 'M&M Kuntotalo', '2026-02-01 14:24:43.314544', '2026-02-01 14:24:43.314544'),
   ('be6972a7-02ea-4699-bf48-4d974309dc6b', 'Keski-Suomen Kuntatalo', '2026-02-01 14:25:59.00046', '2026-02-01 14:25:59.00046');

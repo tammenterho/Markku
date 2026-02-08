@@ -155,17 +155,18 @@ const CreateCampaign = () => {
           `http://localhost:3000/users/${username}`,
         );
         const ids: string[] = userRes.data?.companies || [];
+        console.log("User company IDs:", ids);
         if (!ids || ids.length === 0) return;
         const comps = await Promise.all(
-          ids.map((id) =>
+          ids.map((linkId) =>
             axios
-              .get(`http://localhost:3000/companies/${id}`)
+              .get(`http://localhost:3000/companies/${linkId}`)
               .then((r) => r.data),
           ),
         );
         const options = comps
           .map((c: any) =>
-            c && c.id && c.name ? { value: c.id, label: c.name } : null,
+            c && c.linkId && c.name ? { value: c.linkId, label: c.name } : null,
           )
           .filter(Boolean) as { value: string; label: string }[];
         setCompanyOptions(options);
@@ -185,7 +186,7 @@ const CreateCampaign = () => {
     const campaignData = {
       clientId: "659e7d23473b8d69cb77c2fb",
       type: values.type,
-      companyId: values.company,
+      companyId: values.company, // nyt linkId
       company:
         companyOptions.find((o) => o.value === values.company)?.label ||
         values.company,

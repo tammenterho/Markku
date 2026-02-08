@@ -1,23 +1,25 @@
 import {
-	Entity,
-	PrimaryGeneratedColumn,
-	Column,
-	CreateDateColumn,
-	UpdateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
 } from 'typeorm';
 
 @Entity('companies')
 export class Company {
-	@PrimaryGeneratedColumn('uuid')
-	id: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
-	@Column({ unique: true })
-	name: string;
+  @Column({ type: 'uuid', unique: true, default: () => 'gen_random_uuid()' })
+  linkId: string;
 
-	@CreateDateColumn()
-	createdAt: Date;
+  @Column({ unique: true })
+  name: string;
 
-	@UpdateDateColumn()
-	updatedAt: Date;
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
 }
-

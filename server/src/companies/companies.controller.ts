@@ -23,9 +23,9 @@ export class CompaniesController {
     return this.companiesService.findAll();
   }
 
-  @Get(':id')
-  async findOne(@Param('id') id: string): Promise<Company | null> {
-    return this.companiesService.findOne(id);
+  @Get(':linkId')
+  async findOne(@Param('linkId') linkId: string): Promise<Company | null> {
+    return this.companiesService.findOne(linkId);
   }
 
   @Post()
@@ -35,7 +35,7 @@ export class CompaniesController {
       try {
         await this.usersService.addCompanyToUserById(
           company.creatorId,
-          created.id,
+          created.linkId,
         );
       } catch (err) {
         console.error('Error adding company to user:', err);
@@ -44,13 +44,13 @@ export class CompaniesController {
     return created;
   }
 
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() company: Partial<Company>) {
-    return this.companiesService.update(id, company);
+  @Patch(':linkId')
+  update(@Param('linkId') linkId: string, @Body() company: Partial<Company>) {
+    return this.companiesService.update(linkId, company);
   }
 
-  @Delete(':id')
-  delete(@Param('id') id: string) {
-    return this.companiesService.remove(id);
+  @Delete(':linkId')
+  delete(@Param('linkId') linkId: string) {
+    return this.companiesService.remove(linkId);
   }
 }
