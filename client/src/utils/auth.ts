@@ -21,22 +21,3 @@ export const getUsernameFromToken = (token: string | null): string | null => {
     return null;
   }
 };
-
-export const getUserIdFromToken = (token: string | null): string | null => {
-  if (!token) return null;
-  try {
-    const payload = token.split(".")[1];
-    if (!payload) return null;
-    const normalized = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalized.padEnd(
-      normalized.length + ((4 - (normalized.length % 4)) % 4),
-      "=",
-    );
-    const decoded: any = JSON.parse(atob(padded));
-    if (typeof decoded.id === "string") return decoded.id;
-    if (typeof decoded.sub === "string") return decoded.sub;
-    return null;
-  } catch {
-    return null;
-  }
-};

@@ -12,7 +12,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import axios from "axios";
-import { getUserIdFromToken } from "../utils/auth";
+import { STORAGE_KEYS } from "../utils/constants";
 import { useEffect, useState } from "react";
 import { IconMoon, IconSun } from "@tabler/icons-react";
 
@@ -29,7 +29,7 @@ const Settings = () => {
   >([]);
 
   const fetchUserCompanies = async () => {
-    const userId = getUserIdFromToken(localStorage.getItem("accessToken"));
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!userId) return;
     try {
       const res = await axios.get(`${apiBase}/users/${userId}/companies`);
@@ -127,7 +127,7 @@ const CompanyActionForm = ({
   });
 
   const handleSubmit = async (values: typeof form.values) => {
-    const userId = getUserIdFromToken(localStorage.getItem("accessToken"));
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
     if (!userId) {
       alert("Et ole kirjautunut sisään");
       return;

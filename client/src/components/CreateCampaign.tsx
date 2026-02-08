@@ -21,7 +21,7 @@ import { DatePickerInput } from "@mantine/dates";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { getUsernameFromToken } from "../utils/auth";
+import { STORAGE_KEYS } from "../utils/constants";
 import {
   IconAd,
   IconBuildingSkyscraper,
@@ -54,6 +54,7 @@ const ctas = [
   "Tilaa",
   "Katso lisää",
 ];
+const apiBase = "http://localhost:3000";
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
@@ -61,8 +62,8 @@ const CreateCampaign = () => {
   const copiedCampaign = location.state?.campaign;
 
   const [files, setFiles] = useState<(File & { preview: string })[]>([]);
-  const [companyOptions, setCompanyOptions] = useState<
-    { value: string; label: string }[]
+  const [userCompanies, setUserCompanies] = useState<
+    { id: string; name: string }[]
   >([]);
 
   const removeFile = (index: number) => {
@@ -144,40 +145,20 @@ const CreateCampaign = () => {
     },
   });
 
+  const fetchUserCompanies = async () => {
+    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    if (!userId) return;
+    try {
+      const res = await axios.get(`${apiBase}/users/${userId}/companies`);
+      setUserCompanies(
+        (res.data || []).map((c: any) => ({ id: c.linkId, name: c.name })),
+      );
+    } catch (err) {
+      console.error("Error fetching user companies:", err);
+    }
+  };
+
   useEffect(() => {
-    const fetchUserCompanies = async () => {
-      try {
-        const username = getUsernameFromToken(
-          localStorage.getItem("accessToken"),
-        );
-        if (!username) return;
-        const userRes = await axios.get(
-          `http://localhost:3000/users/${username}`,
-        );
-        const ids: string[] = userRes.data?.companies || [];
-        console.log("User company IDs:", ids);
-        if (!ids || ids.length === 0) return;
-        const comps = await Promise.all(
-          ids.map((linkId) =>
-            axios
-              .get(`http://localhost:3000/companies/${linkId}`)
-              .then((r) => r.data),
-          ),
-        );
-        const options = comps
-          .map((c: any) =>
-            c && c.linkId && c.name ? { value: c.linkId, label: c.name } : null,
-          )
-          .filter(Boolean) as { value: string; label: string }[];
-        setCompanyOptions(options);
-        // set default company if none provided via copiedCampaign
-        if (!copiedCampaign?.company && options.length > 0) {
-          form.setFieldValue("company", options[0].value);
-        }
-      } catch (err) {
-        console.error("Error fetching user companies:", err);
-      }
-    };
     fetchUserCompanies();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -188,7 +169,7 @@ const CreateCampaign = () => {
       type: values.type,
       companyId: values.company, // nyt linkId
       company:
-        companyOptions.find((o) => o.value === values.company)?.label ||
+        userCompanies.find((o) => o.id === values.company)?.name ||
         values.company,
       payer: values.payer,
       name: values.name,
@@ -238,7 +219,7 @@ const CreateCampaign = () => {
           w={"38rem"}
           label="Yritys"
           placeholder="Valitse yritys"
-          data={companyOptions}
+          data={userCompanies.map((c) => ({ value: c.id, label: c.name }))}
           {...form.getInputProps("company")}
         />
         <TextInput w={"38rem"} label="Nimi" {...form.getInputProps("name")} />
