@@ -6,17 +6,31 @@ import {
   Param,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
 import { CampaignsService } from './campaigns.service';
 import { Campaign } from './campaign.entity';
+import { UsersService } from '../users/users.service';
+import type { Request } from 'express';
 
 @Controller('campaigns')
 export class CampaignsController {
-  constructor(private readonly campaignsService: CampaignsService) {}
+  constructor(
+    private readonly campaignsService: CampaignsService,
+    private readonly usersService: UsersService,
+  ) {}
 
   @Get()
-  async findAll(): Promise<Campaign[]> {
-    return this.campaignsService.findAll();
+  async findAll(@Req() req: Request): Promise<Campaign[]> {
+    // Käyttäjän uuid headerissa
+    const userId = req.headers['x-user-id'] as string;
+    if (!userId) return [];
+    const user = await this.usersService.findById(userId);
+    console.log(
+      `User found for campaigns: ${user?.username}, companies: ${user?.companies}`,
+    );
+    if (!user || !user.companies) return [];
+    return this.campaignsService.findAllByCompanyIds(user.companies);
   }
 
   @Post()

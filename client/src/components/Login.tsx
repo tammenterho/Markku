@@ -29,7 +29,10 @@ const Login = () => {
     },
   });
 
-  const handleSubmit = async (values: { username: string; password: string }) => {
+  const handleSubmit = async (values: {
+    username: string;
+    password: string;
+  }) => {
     setLoading(true);
     setError(null);
 
@@ -41,12 +44,31 @@ const Login = () => {
 
       if (response.data.accessToken) {
         localStorage.setItem("accessToken", response.data.accessToken);
+
+        // Hae käyttäjän tiedot ja tallenna companies localStorageen
+        try {
+          const userResponse = await axios.get(
+            `http://localhost:3000/users/${values.username}`,
+          );
+          if (userResponse.data.companies) {
+            localStorage.setItem(
+              "userCompanies",
+              JSON.stringify(userResponse.data.companies),
+            );
+          }
+          if (userResponse.data.id) {
+            localStorage.setItem("userId", userResponse.data.id);
+          }
+        } catch (err) {
+          console.error("Error fetching user data:", err);
+        }
+
         window.location.href = "/";
       }
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         setError(
-          err.response?.data?.message || "Login failed. Please try again."
+          err.response?.data?.message || "Login failed. Please try again.",
         );
       } else {
         setError("Login failed. Please try again.");

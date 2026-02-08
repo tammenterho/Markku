@@ -73,9 +73,20 @@ export const CampaignList = () => {
 
   const fetchCampaigns = () => {
     setLoading(true);
+
+    // Hae käyttäjän id localStoragesta
+    const userId = localStorage.getItem("userId");
+    const userCompanies = localStorage.getItem("userCompanies");
+    
+    console.log("Fetching campaigns with userId:", userId);
+    console.log("User companies from localStorage:", userCompanies);
+
     axios
-      .get("http://localhost:3000/campaigns")
+      .get("http://localhost:3000/campaigns", {
+        headers: userId ? { "x-user-id": userId } : {},
+      })
       .then((response) => {
+        console.log("Campaigns response:", response.data);
         setCampaigns(response.data);
         setLoading(false);
       })
