@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DeleteResult, UpdateResult } from 'typeorm';
+import { Repository, DeleteResult, UpdateResult, DataSource } from 'typeorm';
 import { Company } from './companies.entity';
 
 @Injectable()
@@ -8,6 +8,7 @@ export class CompaniesService {
   constructor(
     @InjectRepository(Company)
     private readonly companyRepository: Repository<Company>,
+    private readonly dataSource: DataSource,
   ) {}
 
   async findAll(): Promise<Company[]> {
@@ -21,7 +22,46 @@ export class CompaniesService {
   async create(companyData: Partial<Company>): Promise<Company> {
     // Remove linkId if present, so DB generates it
     const { linkId, ...data } = companyData;
-    return this.companyRepository.save(data);
+    const company = await this.companyRepository.save(data);
+
+    // Luo skeema ja campaigns-taulu yritykselle
+    const schemaName = `tenant_${company.id}`;
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    try {
+      // Luo skeema jos ei ole olemassa
+      await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS "${schemaName}"`);
+      // Luo campaigns-taulu skeemaan
+      await queryRunner.query(`CREATE TABLE IF NOT EXISTS "${schemaName}".campaigns (
+        id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+        clientId varchar(255) NOT NULL,
+        companyId varchar(255) NOT NULL,
+        company varchar(255) NOT NULL,
+        customer varchar(255) NOT NULL,
+        name varchar(255) NOT NULL,
+        payer varchar(255),
+        title varchar(255),
+        copyText text,
+        targetAge varchar(50),
+        targetGender varchar(50),
+        targetArea varchar(100),
+        budget numeric NOT NULL DEFAULT 0,
+        budgetPeriod varchar(255),
+        mediaInfo varchar(255),
+        start timestamp,
+        "end" timestamp,
+        status boolean NOT NULL DEFAULT false,
+        type varchar(50),
+        url varchar(255),
+        cta varchar(255),
+        createdBy varchar(255) NOT NULL,
+        createdAt timestamp NOT NULL DEFAULT now(),
+        updatedAt timestamp NOT NULL DEFAULT now()
+      )`);
+    } finally {
+      await queryRunner.release();
+    }
+    return company;
   }
 
   async update(
