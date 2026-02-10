@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Container, Text } from "@mantine/core";
+import { Container, Text, Checkbox, Group } from "@mantine/core";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
 
 const YEAR = 2026;
 const WEEKS_IN_YEAR = 52;
+const MONTHS_IN_YEAR = 12;
+const QUARTERS_IN_YEAR = 4;
 
 // Helper function to get week number from date
 const getWeekNumber = (date: Date): number => {
@@ -57,6 +59,62 @@ const getCampaignWeeks = (start: Date, end: Date, year: number): number[] => {
   return weeks;
 };
 
+// Helper to get campaign months span
+const getCampaignMonths = (start: Date, end: Date, year: number): number[] => {
+  const months: number[] = [];
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  const yearStart = new Date(year, 0, 1);
+  const yearEnd = new Date(year, 11, 31);
+
+  if (endDate < yearStart || startDate > yearEnd) {
+    return months;
+  }
+
+  const effectiveStart = startDate < yearStart ? yearStart : startDate;
+  const effectiveEnd = endDate > yearEnd ? yearEnd : endDate;
+
+  const startMonth = effectiveStart.getMonth() + 1; // 1-12
+  const endMonth = effectiveEnd.getMonth() + 1;
+
+  for (let i = startMonth; i <= endMonth; i++) {
+    months.push(i);
+  }
+
+  return months;
+};
+
+// Helper to get campaign quarters span
+const getCampaignQuarters = (
+  start: Date,
+  end: Date,
+  year: number,
+): number[] => {
+  const quarters: number[] = [];
+  const startDate = new Date(start);
+  const endDate = new Date(end);
+
+  const yearStart = new Date(year, 0, 1);
+  const yearEnd = new Date(year, 11, 31);
+
+  if (endDate < yearStart || startDate > yearEnd) {
+    return quarters;
+  }
+
+  const effectiveStart = startDate < yearStart ? yearStart : startDate;
+  const effectiveEnd = endDate > yearEnd ? yearEnd : endDate;
+
+  const startQuarter = Math.floor(effectiveStart.getMonth() / 3) + 1; // 1-4
+  const endQuarter = Math.floor(effectiveEnd.getMonth() / 3) + 1;
+
+  for (let i = startQuarter; i <= endQuarter; i++) {
+    quarters.push(i);
+  }
+
+  return quarters;
+};
+
 // Generate color for campaign based on its index
 const getCampaignColor = (index: number): string => {
   const colors = [
@@ -81,7 +139,7 @@ const getCampaignColor = (index: number): string => {
 
 interface CampaignSegment {
   campaign: CampaignType;
-  week: number;
+  period: number; // week, month, or quarter number
   color: string;
 }
 
@@ -101,6 +159,23 @@ export const YearClock = ({
   const [hoveredCampaignId, setHoveredCampaignId] = useState<string | null>(
     null,
   );
+  const [showMonths, setShowMonths] = useState(false);
+  const [showQuarters, setShowQuarters] = useState(false);
+
+  const monthNames = [
+    "Tammi",
+    "Helmi",
+    "Maalis",
+    "Huhti",
+    "Touko",
+    "Kesä",
+    "Heinä",
+    "Elo",
+    "Syys",
+    "Loka",
+    "Marras",
+    "Joulu",
+  ];
 
   // Filter campaigns that overlap with the target year
   const campaigns = allCampaigns.filter((c: CampaignType) => {
@@ -111,7 +186,7 @@ export const YearClock = ({
     return !(end < yearStart || start > yearEnd);
   });
 
-  // Build segments for each week
+  // Build segments for each week (always use weeks for campaigns)
   const segments: CampaignSegment[] = [];
   campaigns.forEach((campaign, index) => {
     const weeks = getCampaignWeeks(
@@ -121,8 +196,61 @@ export const YearClock = ({
     );
     const color = getCampaignColor(index);
     weeks.forEach((week) => {
-      segments.push({ campaign, week, color });
+      segments.push({ campaign, period: week, color });
     });
+  });
+
+  // Group segments by period for multi-campaign periods
+  const periodSegments = new Map<number, CampaignSegment[]>();
+  segments.forEach((seg) => {
+    if (!periodSegments.has(seg.period)) {
+      periodSegments.set(seg.period, []);
+    }
+    periodSegments.get(seg.period)?.push(seg);
+  });
+
+  // Find the maximum number of concurrent campaigns in any period
+  const maxConcurrentCampaigns = Math.max(
+    ...Array.from(periodSegments.values()).map((segs) => segs.length),
+    1,
+  );
+
+  // Assign each campaign a consistent track number, avoiding overlaps
+  const campaignTracks = new Map<string, number>();
+  const trackOccupancy: Map<number, Set<number>> = new Map(); // track -> set of periods
+
+  campaigns.forEach((campaign) => {
+    const periods = getCampaignWeeks(
+      new Date(campaign.start),
+      new Date(campaign.end),
+      YEAR,
+    );
+
+    // Find the first track that doesn't conflict with this campaign's periods
+    let assignedTrack = -1;
+    for (let track = 0; track < maxConcurrentCampaigns; track++) {
+      const occupiedPeriods = trackOccupancy.get(track) || new Set();
+      const hasConflict = periods.some((p) => occupiedPeriods.has(p));
+
+      if (!hasConflict) {
+        assignedTrack = track;
+        // Mark these periods as occupied in this track
+        periods.forEach((p) => {
+          if (!trackOccupancy.has(track)) {
+            trackOccupancy.set(track, new Set());
+          }
+          trackOccupancy.get(track)!.add(p);
+        });
+        break;
+      }
+    }
+
+    // If no non-conflicting track found, use a fallback
+    if (assignedTrack === -1) {
+      assignedTrack = campaigns.indexOf(campaign) % maxConcurrentCampaigns;
+    }
+
+    campaignTracks.set(campaign.id, assignedTrack);
   });
 
   // SVG dimensions
@@ -149,15 +277,6 @@ export const YearClock = ({
     return `M ${x1} ${y1} L ${x2} ${y2} A ${outerRadius} ${outerRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${innerRadius} ${innerRadius} 0 0 0 ${x1} ${y1} Z`;
   };
 
-  // Group segments by week for multi-campaign weeks
-  const weekSegments = new Map<number, CampaignSegment[]>();
-  segments.forEach((seg) => {
-    if (!weekSegments.has(seg.week)) {
-      weekSegments.set(seg.week, []);
-    }
-    weekSegments.get(seg.week)?.push(seg);
-  });
-
   return (
     <div style={{ width: "100%", padding: "10px" }}>
       <Container
@@ -172,6 +291,18 @@ export const YearClock = ({
           <Text>Ei kampanjoita vuodelle {YEAR}</Text>
         ) : (
           <>
+            <Group mb="md">
+              <Checkbox
+                label="Näytä kuukaudet"
+                checked={showMonths}
+                onChange={(e) => setShowMonths(e.currentTarget.checked)}
+              />
+              <Checkbox
+                label="Näytä kvartaalit"
+                checked={showQuarters}
+                onChange={(e) => setShowQuarters(e.currentTarget.checked)}
+              />
+            </Group>
             <svg
               viewBox={`0 0 ${size} ${size}`}
               style={{
@@ -202,9 +333,11 @@ export const YearClock = ({
               {/* Week segments */}
               {Array.from({ length: WEEKS_IN_YEAR }, (_, i) => i + 1).map(
                 (week) => {
-                  const weekSegs = weekSegments.get(week) || [];
+                  const periodSegs = periodSegments.get(week) || [];
+                  const radiusStep =
+                    (outerRadius - innerRadius) / maxConcurrentCampaigns;
 
-                  if (weekSegs.length === 0) {
+                  if (periodSegs.length === 0) {
                     // Empty week - draw gray background
                     return (
                       <path
@@ -217,16 +350,61 @@ export const YearClock = ({
                     );
                   }
 
-                  // Week has campaigns - create stacked segments
-                  const segmentCount = weekSegs.length;
-                  const radiusStep = (outerRadius - innerRadius) / segmentCount;
-
                   return (
                     <g key={`week-${week}`}>
-                      {weekSegs.map((seg, idx) => {
-                        const segInnerRadius = innerRadius + idx * radiusStep;
+                      {/* Draw all tracks as white/light background first */}
+                      {Array.from(
+                        { length: maxConcurrentCampaigns },
+                        (_, trackIndex) => {
+                          const segInnerRadius =
+                            innerRadius + trackIndex * radiusStep;
+                          const segOuterRadius =
+                            innerRadius + (trackIndex + 1) * radiusStep;
+
+                          const startAngle =
+                            (week - 1) * anglePerWeek - Math.PI / 2;
+                          const endAngle = week * anglePerWeek - Math.PI / 2;
+
+                          const x1 =
+                            center + segInnerRadius * Math.cos(startAngle);
+                          const y1 =
+                            center + segInnerRadius * Math.sin(startAngle);
+                          const x2 =
+                            center + segOuterRadius * Math.cos(startAngle);
+                          const y2 =
+                            center + segOuterRadius * Math.sin(startAngle);
+                          const x3 =
+                            center + segOuterRadius * Math.cos(endAngle);
+                          const y3 =
+                            center + segOuterRadius * Math.sin(endAngle);
+                          const x4 =
+                            center + segInnerRadius * Math.cos(endAngle);
+                          const y4 =
+                            center + segInnerRadius * Math.sin(endAngle);
+
+                          const path = `M ${x1} ${y1} L ${x2} ${y2} A ${segOuterRadius} ${segOuterRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${segInnerRadius} ${segInnerRadius} 0 0 0 ${x1} ${y1} Z`;
+
+                          return (
+                            <path
+                              key={`bg-${week}-${trackIndex}`}
+                              d={path}
+                              fill="#f5f5f5"
+                              stroke="#e0e0e0"
+                              strokeWidth="0.5"
+                            />
+                          );
+                        },
+                      )}
+
+                      {/* Draw campaigns on top */}
+                      {periodSegs.map((seg) => {
+                        // Use consistent track number for this campaign
+                        const trackIndex =
+                          campaignTracks.get(seg.campaign.id) || 0;
+                        const segInnerRadius =
+                          innerRadius + trackIndex * radiusStep;
                         const segOuterRadius =
-                          innerRadius + (idx + 1) * radiusStep;
+                          innerRadius + (trackIndex + 1) * radiusStep;
 
                         const startAngle =
                           (week - 1) * anglePerWeek - Math.PI / 2;
@@ -249,7 +427,7 @@ export const YearClock = ({
 
                         return (
                           <path
-                            key={`seg-${week}-${idx}`}
+                            key={`seg-${week}-${seg.campaign.id}`}
                             d={path}
                             fill={seg.color}
                             stroke="white"
@@ -278,27 +456,135 @@ export const YearClock = ({
                 },
               )}
 
-              {/* Week numbers */}
-              {[1, 13, 26, 39].map((week) => {
-                const angle = (week - 1) * anglePerWeek - Math.PI / 2;
-                const labelRadius = outerRadius + 30;
-                const x = center + labelRadius * Math.cos(angle);
-                const y = center + labelRadius * Math.sin(angle);
+              {/* Week labels */}
+              {Array.from({ length: WEEKS_IN_YEAR }, (_, i) => i + 1).map(
+                (week) => {
+                  const angle = (week - 0.5) * anglePerWeek - Math.PI / 2;
+                  const labelRadius = outerRadius + 20;
+                  const x = center + labelRadius * Math.cos(angle);
+                  const y = center + labelRadius * Math.sin(angle);
 
-                return (
-                  <text
-                    key={`label-${week}`}
-                    x={x}
-                    y={y}
-                    textAnchor="middle"
-                    dominantBaseline="middle"
-                    fontSize="14"
-                    fill="#666"
-                  >
-                    V{week}
-                  </text>
-                );
-              })}
+                  return (
+                    <text
+                      key={`label-${week}`}
+                      x={x}
+                      y={y}
+                      textAnchor="middle"
+                      dominantBaseline="middle"
+                      fontSize="9"
+                      fill="#666"
+                    >
+                      {week}
+                    </text>
+                  );
+                },
+              )}
+
+              {/* Month dividers and labels */}
+              {showMonths &&
+                Array.from({ length: MONTHS_IN_YEAR }, (_, i) => i + 1).map(
+                  (month) => {
+                    // Calculate which week each month starts at (approximately)
+                    const weekInMonth = Math.floor(
+                      (month - 1) * (WEEKS_IN_YEAR / MONTHS_IN_YEAR),
+                    );
+                    const angle = weekInMonth * anglePerWeek - Math.PI / 2;
+
+                    // Draw divider line
+                    const lineInner = innerRadius - 10;
+                    const lineOuter = outerRadius + 15;
+                    const x1 = center + lineInner * Math.cos(angle);
+                    const y1 = center + lineInner * Math.sin(angle);
+                    const x2 = center + lineOuter * Math.cos(angle);
+                    const y2 = center + lineOuter * Math.sin(angle);
+
+                    // Label position
+                    const labelRadius = outerRadius + 50;
+                    const midWeek =
+                      weekInMonth + WEEKS_IN_YEAR / MONTHS_IN_YEAR / 2;
+                    const labelAngle = midWeek * anglePerWeek - Math.PI / 2;
+                    const labelX = center + labelRadius * Math.cos(labelAngle);
+                    const labelY = center + labelRadius * Math.sin(labelAngle);
+
+                    return (
+                      <g key={`month-${month}`}>
+                        <line
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke="#2196F3"
+                          strokeWidth="2"
+                          opacity="0.7"
+                        />
+                        <text
+                          x={labelX}
+                          y={labelY}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontSize="14"
+                          fontWeight="600"
+                          fill="#2196F3"
+                        >
+                          {monthNames[month - 1]}
+                        </text>
+                      </g>
+                    );
+                  },
+                )}
+
+              {/* Quarter dividers and labels */}
+              {showQuarters &&
+                Array.from({ length: QUARTERS_IN_YEAR }, (_, i) => i + 1).map(
+                  (quarter) => {
+                    // Calculate which week each quarter starts at
+                    const weekInQuarter = Math.floor(
+                      (quarter - 1) * (WEEKS_IN_YEAR / QUARTERS_IN_YEAR),
+                    );
+                    const angle = weekInQuarter * anglePerWeek - Math.PI / 2;
+
+                    // Draw divider line
+                    const lineInner = innerRadius - 15;
+                    const lineOuter = outerRadius + 15;
+                    const x1 = center + lineInner * Math.cos(angle);
+                    const y1 = center + lineInner * Math.sin(angle);
+                    const x2 = center + lineOuter * Math.cos(angle);
+                    const y2 = center + lineOuter * Math.sin(angle);
+
+                    // Label position
+                    const labelRadius = innerRadius - 35;
+                    const midWeek =
+                      weekInQuarter + WEEKS_IN_YEAR / QUARTERS_IN_YEAR / 2;
+                    const labelAngle = midWeek * anglePerWeek - Math.PI / 2;
+                    const labelX = center + labelRadius * Math.cos(labelAngle);
+                    const labelY = center + labelRadius * Math.sin(labelAngle);
+
+                    return (
+                      <g key={`quarter-${quarter}`}>
+                        <line
+                          x1={x1}
+                          y1={y1}
+                          x2={x2}
+                          y2={y2}
+                          stroke="#FF9800"
+                          strokeWidth="3"
+                          opacity="0.7"
+                        />
+                        <text
+                          x={labelX}
+                          y={labelY}
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                          fontSize="20"
+                          fontWeight="700"
+                          fill="#FF9800"
+                        >
+                          Q{quarter}
+                        </text>
+                      </g>
+                    );
+                  },
+                )}
 
               {/* Center text */}
               <text
