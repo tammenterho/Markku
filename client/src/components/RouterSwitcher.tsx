@@ -21,9 +21,7 @@ const RouterSwitcher = () => {
     <Routes>
       <Route
         path="/login"
-        element={
-          isAuthenticated() ? <Navigate to="/" replace /> : <Login />
-        }
+        element={isAuthenticated() ? <Navigate to="/" replace /> : <Login />}
       />
       <Route
         path="/"

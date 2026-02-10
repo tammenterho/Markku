@@ -23,12 +23,14 @@ import {
   IconCopy,
 } from "@tabler/icons-react";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
+import { YearClock } from "./YearClock";
 import classes from "./campaignList.module.css";
 import { API_BASE_URL, STORAGE_KEYS, USER_ID_HEADER } from "../utils/constants";
 
 type SortKey = keyof CampaignType | null;
 type SortDirection = "asc" | "desc";
 type FilterType = "all" | "past" | "current" | "future";
+type ViewType = "list" | "clock";
 
 export const CampaignList = () => {
   const navigate = useNavigate();
@@ -36,6 +38,7 @@ export const CampaignList = () => {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filter, setFilter] = useState<FilterType>("all");
+  const [view, setView] = useState<ViewType>("list");
   const [sortKey, setSortKey] = useState<SortKey>(null);
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [selectedCampaign, setSelectedCampaign] = useState<CampaignType | null>(
@@ -322,95 +325,119 @@ export const CampaignList = () => {
       <h1>Kampanjat</h1>
       <Group mb="md">
         <Button
-          variant={filter === "all" ? "filled" : "outline"}
-          onClick={() => setFilter("all")}
+          variant={view === "list" ? "filled" : "outline"}
+          onClick={() => setView("list")}
         >
-          Kaikki
+          Lista
         </Button>
         <Button
-          variant={filter === "past" ? "filled" : "outline"}
-          onClick={() => setFilter("past")}
+          variant={view === "clock" ? "filled" : "outline"}
+          onClick={() => setView("clock")}
         >
-          Menneet
-        </Button>
-        <Button
-          variant={filter === "current" ? "filled" : "outline"}
-          onClick={() => setFilter("current")}
-        >
-          Käynnissä
-        </Button>
-        <Button
-          variant={filter === "future" ? "filled" : "outline"}
-          onClick={() => setFilter("future")}
-        >
-          Tulevat
+          Vuosikello
         </Button>
       </Group>
-      <Group mb="md">
-        <TextInput
-          placeholder="Hae kampanjaa..."
-          leftSection={<IconSearch />}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.currentTarget.value)}
-          style={{ flex: 1 }}
-        />
-        <Menu shadow="md" width={200} closeOnItemClick={false}>
-          <Menu.Target>
-            <Button variant="default" leftSection={<IconColumns size={16} />}>
-              Sarakkeet
-            </Button>
-          </Menu.Target>
-          <Menu.Dropdown>
-            <Menu.Label>Näytä sarakkeet</Menu.Label>
-            {columns.map((col, index) => (
-              <Menu.Item
-                key={col.key}
-                onClick={() => {
-                  const newColumns = [...columns];
-                  newColumns[index].visible = !newColumns[index].visible;
-                  setColumns(newColumns);
-                }}
-              >
-                <Checkbox
-                  label={col.label}
-                  checked={col.visible}
-                  readOnly
-                  style={{ pointerEvents: "none" }}
-                />
-              </Menu.Item>
-            ))}
-          </Menu.Dropdown>
-        </Menu>
-      </Group>
-      {filteredCampaigns.length === 0 ? (
-        <Text>Ei kampanjoita löytynyt haulla "{searchQuery}"</Text>
+
+      {view === "clock" ? (
+        <YearClock campaigns={campaigns} onUpdate={fetchCampaigns} />
       ) : (
-        <Table
-          striped
-          highlightOnHover
-          withTableBorder
-          withColumnBorders
-          verticalSpacing="md"
-        >
-          <Table.Thead>
-            <Table.Tr>
-              {columns
-                .filter((c) => c.visible)
-                .map((col) =>
-                  col.key === "actions" ? (
-                    <Table.Th key={col.key}>{col.label}</Table.Th>
-                  ) : (
-                    <SortableHeader
-                      key={col.key}
+        <>
+          <Group mb="md">
+            <Button
+              variant={filter === "all" ? "filled" : "outline"}
+              onClick={() => setFilter("all")}
+            >
+              Kaikki
+            </Button>
+            <Button
+              variant={filter === "past" ? "filled" : "outline"}
+              onClick={() => setFilter("past")}
+            >
+              Menneet
+            </Button>
+            <Button
+              variant={filter === "current" ? "filled" : "outline"}
+              onClick={() => setFilter("current")}
+            >
+              Käynnissä
+            </Button>
+            <Button
+              variant={filter === "future" ? "filled" : "outline"}
+              onClick={() => setFilter("future")}
+            >
+              Tulevat
+            </Button>
+          </Group>
+          <Group mb="md">
+            <TextInput
+              placeholder="Hae kampanjaa..."
+              leftSection={<IconSearch />}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.currentTarget.value)}
+              style={{ flex: 1 }}
+            />
+            <Menu shadow="md" width={200} closeOnItemClick={false}>
+              <Menu.Target>
+                <Button
+                  variant="default"
+                  leftSection={<IconColumns size={16} />}
+                >
+                  Sarakkeet
+                </Button>
+              </Menu.Target>
+              <Menu.Dropdown>
+                <Menu.Label>Näytä sarakkeet</Menu.Label>
+                {columns.map((col, index) => (
+                  <Menu.Item
+                    key={col.key}
+                    onClick={() => {
+                      const newColumns = [...columns];
+                      newColumns[index].visible = !newColumns[index].visible;
+                      setColumns(newColumns);
+                    }}
+                  >
+                    <Checkbox
                       label={col.label}
-                      sortBy={col.key as SortKey}
+                      checked={col.visible}
+                      readOnly
+                      style={{ pointerEvents: "none" }}
                     />
-                  ),
-                )}
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>{rows}</Table.Tbody>
-        </Table>
+                  </Menu.Item>
+                ))}
+              </Menu.Dropdown>
+            </Menu>
+          </Group>
+          {filteredCampaigns.length === 0 ? (
+            <Text>Ei kampanjoita löytynyt haulla "{searchQuery}"</Text>
+          ) : (
+            <Table
+              striped
+              highlightOnHover
+              withTableBorder
+              withColumnBorders
+              verticalSpacing="md"
+            >
+              <Table.Thead>
+                <Table.Tr>
+                  {columns
+                    .filter((c) => c.visible)
+                    .map((col) =>
+                      col.key === "actions" ? (
+                        <Table.Th key={col.key}>{col.label}</Table.Th>
+                      ) : (
+                        <SortableHeader
+                          key={col.key}
+                          label={col.label}
+                          sortBy={col.key as SortKey}
+                        />
+                      ),
+                    )}
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>{rows}</Table.Tbody>
+            </Table>
+          )}
+        </>
       )}
 
       <Campaign
