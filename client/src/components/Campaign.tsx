@@ -60,7 +60,7 @@ interface CampaignProps {
   onUpdate: () => void;
 }
 
-const apiBase = "http://localhost:3000";
+const apiBase = "/api";
 
 const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
   const form = useForm({

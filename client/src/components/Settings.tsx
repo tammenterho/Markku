@@ -19,7 +19,7 @@ import { STORAGE_KEYS } from "../utils/constants";
 import { useEffect, useState } from "react";
 import { IconCopy, IconMoon, IconSun } from "@tabler/icons-react";
 
-const apiBase = "http://localhost:3000";
+const apiBase = "/api";
 
 const Settings = () => {
   const { setColorScheme } = useMantineColorScheme();

@@ -1,4 +1,4 @@
-export const API_BASE_URL = "http://localhost:3000";
+export const API_BASE_URL = "/api";
 export const USER_ID_HEADER = "x-user-id";
 
 export const STORAGE_KEYS = {

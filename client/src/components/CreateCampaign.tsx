@@ -36,7 +36,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
-const apiBase = "http://localhost:3000";
+const apiBase = "/api";
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
@@ -201,7 +201,7 @@ const CreateCampaign = () => {
     };
 
     try {
-      await axios.post("http://localhost:3000/campaigns", campaignData);
+      await axios.post("/api/campaigns", campaignData);
       navigate("/campaign");
     } catch (error) {
       console.error("Error creating campaign:", error);
