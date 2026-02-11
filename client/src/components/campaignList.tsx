@@ -9,6 +9,7 @@ import {
   TextInput,
   Group,
   Button,
+  SegmentedControl,
   Menu,
   Checkbox,
 } from "@mantine/core";
@@ -21,6 +22,8 @@ import {
   IconTrash,
   IconColumns,
   IconCopy,
+  IconTriangleFilled,
+  IconCircleFilled,
 } from "@tabler/icons-react";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
 import { YearClock } from "./YearClock";
@@ -323,20 +326,17 @@ export const CampaignList = () => {
   return (
     <div style={{ width: "100%" }}>
       <h1>Kampanjat</h1>
-      <Group mb="md">
-        <Button
-          variant={view === "list" ? "filled" : "outline"}
-          onClick={() => setView("list")}
-        >
-          Lista
-        </Button>
-        <Button
-          variant={view === "clock" ? "filled" : "outline"}
-          onClick={() => setView("clock")}
-        >
-          Vuosikello
-        </Button>
-      </Group>
+      <SegmentedControl
+        mb="md"
+        value={view}
+        onChange={(val) => setView(val as ViewType)}
+        radius="xl"
+        size="md"
+        data={[
+          { value: "list", label: "Lista" },
+          { value: "clock", label: "Vuosikello" },
+        ]}
+      />
 
       {view === "clock" ? (
         <YearClock campaigns={campaigns} onUpdate={fetchCampaigns} />
@@ -352,18 +352,31 @@ export const CampaignList = () => {
             <Button
               variant={filter === "past" ? "filled" : "outline"}
               onClick={() => setFilter("past")}
+              leftSection={
+                <IconTriangleFilled
+                  size={12}
+                  style={{ transform: "rotate(-90deg)" }}
+                />
+              }
             >
               Menneet
             </Button>
             <Button
               variant={filter === "current" ? "filled" : "outline"}
               onClick={() => setFilter("current")}
+              leftSection={<IconCircleFilled size={10} />}
             >
               Käynnissä
             </Button>
             <Button
               variant={filter === "future" ? "filled" : "outline"}
               onClick={() => setFilter("future")}
+              leftSection={
+                <IconTriangleFilled
+                  size={12}
+                  style={{ transform: "rotate(90deg)" }}
+                />
+              }
             >
               Tulevat
             </Button>
@@ -412,7 +425,6 @@ export const CampaignList = () => {
           ) : (
             <Table
               striped
-              highlightOnHover
               withTableBorder
               withColumnBorders
               verticalSpacing="md"

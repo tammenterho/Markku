@@ -4,6 +4,7 @@ import {
   Group,
   SegmentedControl,
   Stack,
+  Table,
   Text,
   TextInput,
   Title,
@@ -79,7 +80,7 @@ const Settings = () => {
       </Stack>
 
       <Stack align="flex-start" mt="lg">
-        <Title order={4}>Yritykset</Title>
+        <Title order={4}>Yritystiedot</Title>
         <Stack align="flex-start">
           <Title order={5} mb="sm">
             Luo yritys
@@ -98,13 +99,28 @@ const Settings = () => {
         {userCompanies.length === 0 ? (
           <Text c="dimmed">Ei yrityksiä</Text>
         ) : (
-          <ul>
-            {userCompanies.map((c) => (
-              <li key={c.id}>
-                {c.name} — {c.id}
-              </li>
-            ))}
-          </ul>
+          <Table
+            striped
+            highlightOnHover
+            withTableBorder
+            withColumnBorders
+            verticalSpacing="md"
+          >
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Nimi</Table.Th>
+                <Table.Th>ID</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {userCompanies.map((c) => (
+                <Table.Tr key={c.id}>
+                  <Table.Td>{c.name}</Table.Td>
+                  <Table.Td>{c.id}</Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
         )}
       </Stack>
     </div>
@@ -166,7 +182,6 @@ const CompanyActionForm = ({
       <Group align="flex-end">
         <TextInput
           w={"20rem"}
-          label={mode === "create" ? "Yrityksen nimi" : "Yrityksen UUID"}
           placeholder={
             mode === "create" ? "Anna yrityksen nimi" : "Anna yrityksen UUID"
           }
