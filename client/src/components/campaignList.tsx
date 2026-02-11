@@ -26,6 +26,13 @@ import {
   IconCircleFilled,
 } from "@tabler/icons-react";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
+import {
+  type BudgetPeriod,
+  type CampaignType as CampaignTypeLabel,
+  budgetPeriodLabels,
+  typeLabels,
+} from "../utils/campaignLabels";
+import { formatAgeRange, formatDate } from "../utils/common";
 import { YearClock } from "./YearClock";
 import classes from "./campaignList.module.css";
 import { API_BASE_URL, STORAGE_KEYS, USER_ID_HEADER } from "../utils/constants";
@@ -58,7 +65,7 @@ export const CampaignList = () => {
     { key: "budget", label: "Budjetti", visible: true },
     { key: "type", label: "Tyyppi", visible: true },
     { key: "status", label: "Tila", visible: true },
-    { key: "actions", label: "Poista", visible: true },
+    { key: "actions", label: "Toiminnot", visible: true },
     // Hidden by default
     { key: "id", label: "ID", visible: false },
     { key: "clientId", label: "Client ID", visible: false },
@@ -72,7 +79,7 @@ export const CampaignList = () => {
     { key: "targetAge", label: "Kohdeikä", visible: false },
     { key: "targetGender", label: "Sukupuoli", visible: false },
     { key: "targetArea", label: "Alue", visible: false },
-    { key: "budgetPeriod", label: "Budjettikausi", visible: false },
+    { key: "budgetPeriod", label: "Budjetin käyttö", visible: false },
     { key: "createdAt", label: "Luotu", visible: false },
     { key: "updatedAt", label: "Päivitetty", visible: false },
     { key: "createdBy", label: "Luonut", visible: false },
@@ -276,9 +283,10 @@ export const CampaignList = () => {
           if (col.key === "actions") {
             return (
               <Table.Td key={col.key}>
-                <Group gap="xs">
+                <Group gap="xs" style={{ whiteSpace: "nowrap" }}>
                   <IconCopy
                     style={{ cursor: "pointer" }}
+                    className={classes.copyIcon}
                     onClick={(e) => handleCopy(e, campaign)}
                   />
                   <IconTrash
@@ -314,9 +322,20 @@ export const CampaignList = () => {
             col.key === "createdAt" ||
             col.key === "updatedAt"
           ) {
-            content = new Date(content as unknown as Date).toLocaleDateString();
+            content = formatDate(content as unknown as Date);
           } else if (col.key === "budget") {
             content = `${content}€`;
+          } else if (col.key === "budgetPeriod") {
+            content =
+              budgetPeriodLabels[content as BudgetPeriod] ??
+              (content as string);
+          } else if (col.key === "targetAge") {
+            if (typeof content === "string") {
+              content = formatAgeRange(content) || content;
+            }
+          } else if (col.key === "type") {
+            content =
+              typeLabels[content as CampaignTypeLabel] ?? (content as string);
           }
           return <Table.Td key={col.key}>{content}</Table.Td>;
         })}

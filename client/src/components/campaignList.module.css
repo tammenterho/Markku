@@ -4,3 +4,9 @@
 .trashIcon:hover {
   color: rgb(150, 62, 62);
 }
+.copyIcon {
+  cursor: pointer;
+}
+.copyIcon:hover {
+  color: rgb(2, 146, 35);
+}

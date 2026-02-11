@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Container, Text, Checkbox, Group } from "@mantine/core";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
+import { parseLocalDate } from "../utils/common";
 
 const YEAR = 2026;
 const WEEKS_IN_YEAR = 52;
@@ -123,8 +124,8 @@ export const YearClock = ({
 
   // Filter campaigns that overlap with the target year
   const campaigns = allCampaigns.filter((c: CampaignType) => {
-    const start = new Date(c.start);
-    const end = new Date(c.end);
+    const start = parseLocalDate(c.start) ?? new Date(c.start);
+    const end = parseLocalDate(c.end) ?? new Date(c.end);
     const yearStart = new Date(YEAR, 0, 1);
     const yearEnd = new Date(YEAR, 11, 31);
     return !(end < yearStart || start > yearEnd);
@@ -134,8 +135,8 @@ export const YearClock = ({
   const segments: CampaignSegment[] = [];
   campaigns.forEach((campaign, index) => {
     const weeks = getCampaignWeeks(
-      new Date(campaign.start),
-      new Date(campaign.end),
+      parseLocalDate(campaign.start) ?? new Date(campaign.start),
+      parseLocalDate(campaign.end) ?? new Date(campaign.end),
       YEAR,
     );
     const color = getCampaignColor(index);
@@ -165,8 +166,8 @@ export const YearClock = ({
 
   campaigns.forEach((campaign) => {
     const periods = getCampaignWeeks(
-      new Date(campaign.start),
-      new Date(campaign.end),
+      parseLocalDate(campaign.start) ?? new Date(campaign.start),
+      parseLocalDate(campaign.end) ?? new Date(campaign.end),
       YEAR,
     );
 

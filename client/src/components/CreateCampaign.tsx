@@ -17,11 +17,13 @@ import {
 } from "@mantine/core";
 import { Dropzone, IMAGE_MIME_TYPE } from "@mantine/dropzone";
 import { useForm } from "@mantine/form";
-import { DatePickerInput } from "@mantine/dates";
+import { DateTimePicker } from "@mantine/dates";
+import "dayjs/locale/fi";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { STORAGE_KEYS } from "../utils/constants";
+import { parseLocalDate } from "../utils/common";
 import {
   IconAd,
   IconBuildingSkyscraper,
@@ -101,8 +103,8 @@ const CreateCampaign = () => {
       payer: copiedCampaign?.customer || "",
       budget: copiedCampaign?.budget ? String(copiedCampaign.budget) : "",
       budgetPeriod: copiedCampaign?.budgetPeriod || "DURATION",
-      startDate: copiedCampaign?.start ? new Date(copiedCampaign.start) : null,
-      endDate: copiedCampaign?.end ? new Date(copiedCampaign.end) : null,
+      startDate: parseLocalDate(copiedCampaign?.start),
+      endDate: parseLocalDate(copiedCampaign?.end),
       targetArea: copiedCampaign?.targetArea || "",
       targetAge:
         copiedCampaign?.targetAge &&
@@ -251,17 +253,21 @@ const CreateCampaign = () => {
           </Group>
         )}
         <Group>
-          <DatePickerInput
+          <DateTimePicker
             miw="200px"
             label="Aloitus pvm"
             labelProps={{ style: { whiteSpace: "nowrap" } }}
+            valueFormat="DD.MM.YYYY HH:mm"
+            locale="fi"
             {...form.getInputProps("startDate")}
           />
           {form.values.type === "AD" && (
-            <DatePickerInput
+            <DateTimePicker
               miw="200px"
               label="Lopetus pvm"
               labelProps={{ style: { whiteSpace: "nowrap" } }}
+              valueFormat="DD.MM.YYYY HH:mm"
+              locale="fi"
               {...form.getInputProps("endDate")}
             />
           )}
@@ -408,7 +414,7 @@ const CreateCampaign = () => {
           </>
         )}
         <Group mt="md">
-          <Button type="submit">Submit</Button>
+          <Button type="submit">Luo</Button>
         </Group>
       </form>
     </Center>

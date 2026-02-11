@@ -23,4 +23,5 @@ export const CAMPAIGN_ALLOWED_FIELDS = [
   'url',
   'cta',
   'createdBy',
+  'status',
 ] as const;

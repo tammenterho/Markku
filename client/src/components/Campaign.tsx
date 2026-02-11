@@ -10,14 +10,19 @@ import {
   Select,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
-import { DatePickerInput } from "@mantine/dates";
+import { DateTimePicker } from "@mantine/dates";
+import "dayjs/locale/fi";
 import { useEffect } from "react";
 import { Title } from "@mantine/core";
 import axios from "axios";
 import { USER_ID_HEADER, STORAGE_KEYS } from "../utils/constants";
-
-export type CampaignType = "AD" | "POST";
-export type BudgetPeriod = "DAY" | "DURATION";
+import { formatDate, parseLocalDate } from "../utils/common";
+import {
+  type BudgetPeriod,
+  type CampaignType,
+  budgetPeriodLabels,
+  typeLabels,
+} from "../utils/campaignLabels";
 
 export interface Campaign {
   id: string;
@@ -52,27 +57,6 @@ interface CampaignProps {
   onClose: () => void;
   onUpdate: () => void;
 }
-
-const formatDate = (date: Date | string) => {
-  const d = new Date(date);
-  const day = d.getDate().toString().padStart(2, "0");
-  const month = (d.getMonth() + 1).toString().padStart(2, "0");
-  const year = d.getFullYear();
-  const hours = d.getHours().toString().padStart(2, "0");
-  const minutes = d.getMinutes().toString().padStart(2, "0");
-
-  return `${day}.${month}.${year} klo. ${hours}:${minutes}`;
-};
-
-const typeLabels: Record<CampaignType, string> = {
-  AD: "Mainos",
-  POST: "Postaus",
-};
-
-const budgetPeriodLabels: Record<BudgetPeriod, string> = {
-  DAY: "Päiväbudjetti",
-  DURATION: "Koko mainoksen kesto",
-};
 
 const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
   const form = useForm({
@@ -121,8 +105,8 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
         targetArea: campaign.targetArea,
         budget: campaign.budget,
         budgetPeriod: campaign.budgetPeriod,
-        start: campaign.start ? new Date(campaign.start) : null,
-        end: campaign.end ? new Date(campaign.end) : null,
+        start: parseLocalDate(campaign.start),
+        end: parseLocalDate(campaign.end),
       });
     }
   }, [campaign, opened]);
@@ -190,12 +174,16 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
               ]}
               {...form.getInputProps("budgetPeriod")}
             />
-            <DatePickerInput
+            <DateTimePicker
               label="Kampanja alkaa"
+              valueFormat="DD.MM.YYYY HH:mm"
+              locale="fi"
               {...form.getInputProps("start")}
             />
-            <DatePickerInput
+            <DateTimePicker
               label="Kampanja päättyy"
+              valueFormat="DD.MM.YYYY HH:mm"
+              locale="fi"
               {...form.getInputProps("end")}
             />
             <Title order={5}>Mainonnan kohde</Title>
