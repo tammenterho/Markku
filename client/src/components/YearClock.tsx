@@ -59,62 +59,6 @@ const getCampaignWeeks = (start: Date, end: Date, year: number): number[] => {
   return weeks;
 };
 
-// Helper to get campaign months span
-const getCampaignMonths = (start: Date, end: Date, year: number): number[] => {
-  const months: number[] = [];
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-
-  const yearStart = new Date(year, 0, 1);
-  const yearEnd = new Date(year, 11, 31);
-
-  if (endDate < yearStart || startDate > yearEnd) {
-    return months;
-  }
-
-  const effectiveStart = startDate < yearStart ? yearStart : startDate;
-  const effectiveEnd = endDate > yearEnd ? yearEnd : endDate;
-
-  const startMonth = effectiveStart.getMonth() + 1; // 1-12
-  const endMonth = effectiveEnd.getMonth() + 1;
-
-  for (let i = startMonth; i <= endMonth; i++) {
-    months.push(i);
-  }
-
-  return months;
-};
-
-// Helper to get campaign quarters span
-const getCampaignQuarters = (
-  start: Date,
-  end: Date,
-  year: number,
-): number[] => {
-  const quarters: number[] = [];
-  const startDate = new Date(start);
-  const endDate = new Date(end);
-
-  const yearStart = new Date(year, 0, 1);
-  const yearEnd = new Date(year, 11, 31);
-
-  if (endDate < yearStart || startDate > yearEnd) {
-    return quarters;
-  }
-
-  const effectiveStart = startDate < yearStart ? yearStart : startDate;
-  const effectiveEnd = endDate > yearEnd ? yearEnd : endDate;
-
-  const startQuarter = Math.floor(effectiveStart.getMonth() / 3) + 1; // 1-4
-  const endQuarter = Math.floor(effectiveEnd.getMonth() / 3) + 1;
-
-  for (let i = startQuarter; i <= endQuarter; i++) {
-    quarters.push(i);
-  }
-
-  return quarters;
-};
-
 // Generate color for campaign based on its index
 const getCampaignColor = (index: number): string => {
   const colors = [

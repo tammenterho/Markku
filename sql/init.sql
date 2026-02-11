@@ -3,7 +3,9 @@ BEGIN
   RAISE NOTICE 'Creating campaigns table...';
 END $$;
 
-CREATE TABLE IF NOT EXISTS "campaigns" (
+CREATE SCHEMA IF NOT EXISTS tenant_1;
+
+CREATE TABLE IF NOT EXISTS tenant_1.campaigns (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "clientId" varchar(255) NOT NULL,
   "companyId" varchar(255) NOT NULL,
@@ -37,10 +39,10 @@ BEGIN
 END $$;
 
 
-INSERT INTO "campaigns" (
+INSERT INTO tenant_1.campaigns (
   "id", "clientId", "companyId", "company", "customer", "name", "payer", "title", "copyText", "targetAge", "targetGender", "targetArea", "budget", "budgetPeriod", "mediaInfo", "start", "end", "status", "type", "url", "cta", "createdBy"
 ) VALUES 
-  ('659e7d23-473b-8d69-cb77-c2fb00000000', '659e7d23473b8d69cb77c2fb', '659e7d23473b8d69cb77c2fb', 'M&M Kuntotalo', 'Ville Vallaton', 'Joulukamppis','M&M Kuntotalo', 'Sama kuin ennen joulua', 'Tervetuloa, isot alet!!!', 'Age undefined, undefined', 'Male', 'Area undefined, undefined', 300, 'DURATION', 'kuva jossa kukkia', '2024-01-11 08:00:00', '2024-01-26 16:00:00', false, 'AD', 'www.wrsartfs.com', 'Lue lisää', 'Jussi Heinonen');
+  ('659e7d23-473b-8d69-cb77-c2fb00000000', '659e7d23473b8d69cb77c2fb', '849d9aa3-379c-4cf1-b7bc-206fcc849763', 'M&M Kuntotalo', 'Ville Vallaton', 'Joulukamppis','M&M Kuntotalo', 'Sama kuin ennen joulua', 'Tervetuloa, isot alet!!!', 'Age undefined, undefined', 'Male', 'Area undefined, undefined', 300, 'DURATION', 'kuva jossa kukkia', '2024-01-11 08:00:00', '2024-01-26 16:00:00', false, 'AD', 'www.wrsartfs.com', 'Lue lisää', 'Jussi Heinonen');
 
 DO $$
 BEGIN
@@ -51,6 +53,7 @@ CREATE TABLE IF NOT EXISTS "users" (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
   "username" character varying NOT NULL,
   "passwordHash" character varying NOT NULL,
+  "companies" text[],
   "isActive" boolean NOT NULL DEFAULT true,
   "createdAt" TIMESTAMP NOT NULL DEFAULT now(),
   "updatedAt" TIMESTAMP NOT NULL DEFAULT now(),
@@ -64,10 +67,10 @@ BEGIN
 END $$;
 
 INSERT INTO "users" (
-  "id", "username", "passwordHash", "isActive", "createdAt", "updatedAt"
+  "id", "username", "passwordHash", "companies", "isActive", "createdAt", "updatedAt"
 ) VALUES 
-  ('849d9aa3-379c-4cf1-b7bc-206fcc849763', 'leevi', '$2b$12$6ZbsNcrEpiU02ukkNB.geehjgpjfa6j9/cWjjT6dsLDo9cUSn9k52', true, '2026-02-01 14:24:43.314544', '2026-02-01 14:24:43.314544'),
-  ('be6972a7-02ea-4699-bf48-4d974309dc6b', 'mikko', '$2b$12$vm7naPfpNR2yL8HZmMbUUOcXGunq3q0cZXeVpLlg1qjqUujDRZ5D.', true, '2026-02-01 14:25:59.00046', '2026-02-01 14:25:59.00046');
+  ('c03ed30b-2b58-48fe-83dc-ae3a6956dba5', 'leevi', '$2b$12$6ZbsNcrEpiU02ukkNB.geehjgpjfa6j9/cWjjT6dsLDo9cUSn9k52', '{849d9aa3-379c-4cf1-b7bc-206fcc849763}', true, '2026-02-01 14:24:43.314544', '2026-02-01 14:24:43.314544'),
+  ('be6972a7-02ea-4699-bf48-4d974309dc6b', 'mikko', '$2b$12$vm7naPfpNR2yL8HZmMbUUOcXGunq3q0cZXeVpLlg1qjqUujDRZ5D.', NULL, true, '2026-02-01 14:25:59.00046', '2026-02-01 14:25:59.00046');
 
   DO $$
 BEGIN
