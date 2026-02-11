@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Button,
   Center,
   Group,
@@ -8,6 +9,7 @@ import {
   Text,
   TextInput,
   Title,
+  Tooltip,
   useComputedColorScheme,
   useMantineColorScheme,
 } from "@mantine/core";
@@ -15,7 +17,7 @@ import { useForm } from "@mantine/form";
 import axios from "axios";
 import { STORAGE_KEYS } from "../utils/constants";
 import { useEffect, useState } from "react";
-import { IconMoon, IconSun } from "@tabler/icons-react";
+import { IconCopy, IconMoon, IconSun } from "@tabler/icons-react";
 
 const apiBase = "http://localhost:3000";
 
@@ -40,6 +42,17 @@ const Settings = () => {
     } catch (err) {
       console.error("Error fetching user companies:", err);
     }
+  };
+
+  const handleCopyId = (id: string) => {
+    navigator.clipboard
+      .writeText(id)
+      .then(() => {
+        console.log("ID copied to clipboard:", id);
+      })
+      .catch((err) => {
+        console.error("Failed to copy:", err);
+      });
   };
 
   useEffect(() => {
@@ -100,6 +113,7 @@ const Settings = () => {
           <Text c="dimmed">Ei yrityksiä</Text>
         ) : (
           <Table
+            w={"40%"}
             striped
             highlightOnHover
             withTableBorder
@@ -116,7 +130,20 @@ const Settings = () => {
               {userCompanies.map((c) => (
                 <Table.Tr key={c.id}>
                   <Table.Td>{c.name}</Table.Td>
-                  <Table.Td>{c.id}</Table.Td>
+                  <Table.Td>
+                    <Group gap="xs">
+                      <Text>{c.id}</Text>
+                      <Tooltip label="Kopioi">
+                        <ActionIcon
+                          variant="subtle"
+                          color="gray"
+                          onClick={() => handleCopyId(c.id)}
+                        >
+                          <IconCopy size={16} />
+                        </ActionIcon>
+                      </Tooltip>
+                    </Group>
+                  </Table.Td>
                 </Table.Tr>
               ))}
             </Table.Tbody>

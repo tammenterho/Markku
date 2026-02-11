@@ -24,6 +24,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { STORAGE_KEYS } from "../utils/constants";
 import { parseLocalDate } from "../utils/common";
+import { genderOptions, ctaOptions } from "../utils/campaignLabels";
 import {
   IconAd,
   IconBuildingSkyscraper,
@@ -33,29 +34,6 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
-// company options will be loaded per-user
-const genders = ["All", "Nainen", "Mies"];
-const ctas = [
-  "Pyydä tarjous",
-  "Hae nyt",
-  "Varaa nyt",
-  "Ota meihin yhteyttä",
-  "Lataa",
-  "Tartu tarjoukseen",
-  "Hanki markkinointeja",
-  "Hae esitysajat",
-  "Lue lisää",
-  "Kuuntele nyt",
-  "Tilaa nyt",
-  "Hanki käyttöoikeus",
-  "Varaa aika",
-  "Näytä ruokalista",
-  "Tilaa päivitykset",
-  "Osta nyt",
-  "Rekisteröidy",
-  "Tilaa",
-  "Katso lisää",
-];
 const apiBase = "http://localhost:3000";
 
 const CreateCampaign = () => {
@@ -288,7 +266,7 @@ const CreateCampaign = () => {
               />
               <Select
                 label="Sukupuoli"
-                data={genders}
+                data={genderOptions}
                 labelProps={{ style: { whiteSpace: "nowrap" } }}
                 {...form.getInputProps("targetGender")}
               />
@@ -408,7 +386,7 @@ const CreateCampaign = () => {
             <Select
               w={"38rem"}
               label="Toimintakutsu"
-              data={ctas}
+              data={ctaOptions}
               {...form.getInputProps("CTA")}
             />
           </>

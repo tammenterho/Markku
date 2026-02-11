@@ -342,6 +342,22 @@ export const CampaignList = () => {
     </Table.Tr>
   ));
 
+  const getEmptyMessage = () => {
+    if (searchQuery.trim()) {
+      return `Ei kampanjoita löytynyt haulla "${searchQuery}"`;
+    }
+    switch (filter) {
+      case "future":
+        return "Ei tulevia kampanjoita";
+      case "past":
+        return "Ei menneitä kampanjoita";
+      case "current":
+        return "Ei kampanjoita käynnissä";
+      default:
+        return "Ei kampanjoita";
+    }
+  };
+
   return (
     <div style={{ width: "100%" }}>
       <h1>Kampanjat</h1>
@@ -440,7 +456,7 @@ export const CampaignList = () => {
             </Menu>
           </Group>
           {filteredCampaigns.length === 0 ? (
-            <Text>Ei kampanjoita löytynyt haulla "{searchQuery}"</Text>
+            <Text>{getEmptyMessage()}</Text>
           ) : (
             <Table
               striped

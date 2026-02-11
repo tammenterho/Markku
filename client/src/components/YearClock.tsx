@@ -1,9 +1,14 @@
-import { useState } from "react";
-import { Container, Text, Checkbox, Group } from "@mantine/core";
+import { useMemo, useState } from "react";
+import {
+  Container,
+  Text,
+  Checkbox,
+  Group,
+  useComputedColorScheme,
+} from "@mantine/core";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
 import { parseLocalDate } from "../utils/common";
 
-const YEAR = 2026;
 const WEEKS_IN_YEAR = 52;
 const MONTHS_IN_YEAR = 12;
 const QUARTERS_IN_YEAR = 4;
@@ -60,27 +65,7 @@ const getCampaignWeeks = (start: Date, end: Date, year: number): number[] => {
   return weeks;
 };
 
-// Generate color for campaign based on its index
-const getCampaignColor = (index: number): string => {
-  const colors = [
-    "#FF6B6B",
-    "#4ECDC4",
-    "#45B7D1",
-    "#FFA07A",
-    "#98D8C8",
-    "#F7DC6F",
-    "#BB8FCE",
-    "#85C1E2",
-    "#F8B739",
-    "#52B788",
-    "#E76F51",
-    "#2A9D8F",
-    "#E9C46A",
-    "#F4A261",
-    "#264653",
-  ];
-  return colors[index % colors.length];
-};
+const GOLDEN_ANGLE = 137.508;
 
 interface CampaignSegment {
   campaign: CampaignType;
@@ -97,6 +82,19 @@ export const YearClock = ({
   campaigns: allCampaigns,
   onUpdate,
 }: YearClockProps) => {
+  const colorScheme = useComputedColorScheme("light", {
+    getInitialValueInEffect: true,
+  });
+  const isDark = colorScheme === "dark";
+  const ringStroke = isDark ? "#3d3d3d" : "#e0e0e0";
+  const emptyFill = isDark ? "#1e1e1e" : "#f5f5f5";
+  const labelColor = isDark ? "#b5b5b5" : "#666";
+  const centerText = isDark ? "#e6e6e6" : "#333";
+  const arrowColor = isDark ? "#9b9b9b" : "#888";
+  const segmentStroke = isDark ? "#1a1a1a" : "#ffffff";
+  const legendHover = isDark ? "#222" : "#f0f0f0";
+
+  const [year, setYear] = useState(2026);
   const [selectedCampaign, setSelectedCampaign] = useState<CampaignType | null>(
     null,
   );
@@ -126,20 +124,32 @@ export const YearClock = ({
   const campaigns = allCampaigns.filter((c: CampaignType) => {
     const start = parseLocalDate(c.start) ?? new Date(c.start);
     const end = parseLocalDate(c.end) ?? new Date(c.end);
-    const yearStart = new Date(YEAR, 0, 1);
-    const yearEnd = new Date(YEAR, 11, 31);
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year, 11, 31);
     return !(end < yearStart || start > yearEnd);
   });
 
+  const colorIndexMap = useMemo(() => {
+    const ids = campaigns.map((c) => c.id).sort();
+    return new Map(ids.map((id, index) => [id, index]));
+  }, [campaigns]);
+
+  const getCampaignColor = (id: string): string => {
+    const index = colorIndexMap.get(id) ?? 0;
+    const hue = (index * GOLDEN_ANGLE) % 360;
+    const lightness = isDark ? 70 : 55;
+    return `hsl(${hue} 70% ${lightness}%)`;
+  };
+
   // Build segments for each week (always use weeks for campaigns)
   const segments: CampaignSegment[] = [];
-  campaigns.forEach((campaign, index) => {
+  campaigns.forEach((campaign) => {
     const weeks = getCampaignWeeks(
       parseLocalDate(campaign.start) ?? new Date(campaign.start),
       parseLocalDate(campaign.end) ?? new Date(campaign.end),
-      YEAR,
+      year,
     );
-    const color = getCampaignColor(index);
+    const color = getCampaignColor(campaign.id);
     weeks.forEach((week) => {
       segments.push({ campaign, period: week, color });
     });
@@ -168,7 +178,7 @@ export const YearClock = ({
     const periods = getCampaignWeeks(
       parseLocalDate(campaign.start) ?? new Date(campaign.start),
       parseLocalDate(campaign.end) ?? new Date(campaign.end),
-      YEAR,
+      year,
     );
 
     // Find the first track that doesn't conflict with this campaign's periods
@@ -232,120 +242,72 @@ export const YearClock = ({
           flexDirection: "column",
         }}
       >
-        {campaigns.length === 0 ? (
-          <Text>Ei kampanjoita vuodelle {YEAR}</Text>
-        ) : (
-          <>
-            <Group mb="md">
-              <Checkbox
-                label="Näytä kuukaudet"
-                checked={showMonths}
-                onChange={(e) => setShowMonths(e.currentTarget.checked)}
-              />
-              <Checkbox
-                label="Näytä kvartaalit"
-                checked={showQuarters}
-                onChange={(e) => setShowQuarters(e.currentTarget.checked)}
-              />
-            </Group>
-            <svg
-              viewBox={`0 0 ${size} ${size}`}
-              style={{
-                maxWidth: "100%",
-                height: "auto",
-                width: "100%",
-                maxHeight: "90vh",
-              }}
-            >
-              {/* Background circle */}
-              <circle
-                cx={center}
-                cy={center}
-                r={outerRadius}
-                fill="none"
-                stroke="#e0e0e0"
-                strokeWidth="1"
-              />
-              <circle
-                cx={center}
-                cy={center}
-                r={innerRadius}
-                fill="none"
-                stroke="#e0e0e0"
-                strokeWidth="1"
-              />
+        <>
+          <Group mb="md">
+            <Checkbox
+              label="Näytä kuukaudet"
+              checked={showMonths}
+              onChange={(e) => setShowMonths(e.currentTarget.checked)}
+            />
+            <Checkbox
+              label="Näytä kvartaalit"
+              checked={showQuarters}
+              onChange={(e) => setShowQuarters(e.currentTarget.checked)}
+            />
+          </Group>
+          <svg
+            viewBox={`0 0 ${size} ${size}`}
+            style={{
+              maxWidth: "100%",
+              height: "auto",
+              width: "100%",
+              maxHeight: "90vh",
+            }}
+          >
+            {/* Background circle */}
+            <circle
+              cx={center}
+              cy={center}
+              r={outerRadius}
+              fill="none"
+              stroke={ringStroke}
+              strokeWidth="1"
+            />
+            <circle
+              cx={center}
+              cy={center}
+              r={innerRadius}
+              fill="none"
+              stroke={ringStroke}
+              strokeWidth="1"
+            />
 
-              {/* Week segments */}
-              {Array.from({ length: WEEKS_IN_YEAR }, (_, i) => i + 1).map(
-                (week) => {
-                  const periodSegs = periodSegments.get(week) || [];
-                  const radiusStep =
-                    (outerRadius - innerRadius) / maxConcurrentCampaigns;
+            {/* Week segments */}
+            {Array.from({ length: WEEKS_IN_YEAR }, (_, i) => i + 1).map(
+              (week) => {
+                const periodSegs = periodSegments.get(week) || [];
+                const radiusStep =
+                  (outerRadius - innerRadius) / maxConcurrentCampaigns;
 
-                  if (periodSegs.length === 0) {
-                    // Empty week - draw gray background
-                    return (
-                      <path
-                        key={`week-${week}`}
-                        d={createSegmentPath(week)}
-                        fill="#f5f5f5"
-                        stroke="#e0e0e0"
-                        strokeWidth="0.5"
-                      />
-                    );
-                  }
-
+                if (periodSegs.length === 0) {
+                  // Empty week - draw gray background
                   return (
-                    <g key={`week-${week}`}>
-                      {/* Draw all tracks as white/light background first */}
-                      {Array.from(
-                        { length: maxConcurrentCampaigns },
-                        (_, trackIndex) => {
-                          const segInnerRadius =
-                            innerRadius + trackIndex * radiusStep;
-                          const segOuterRadius =
-                            innerRadius + (trackIndex + 1) * radiusStep;
+                    <path
+                      key={`week-${week}`}
+                      d={createSegmentPath(week)}
+                      fill={emptyFill}
+                      stroke={ringStroke}
+                      strokeWidth="0.5"
+                    />
+                  );
+                }
 
-                          const startAngle =
-                            (week - 1) * anglePerWeek - Math.PI / 2;
-                          const endAngle = week * anglePerWeek - Math.PI / 2;
-
-                          const x1 =
-                            center + segInnerRadius * Math.cos(startAngle);
-                          const y1 =
-                            center + segInnerRadius * Math.sin(startAngle);
-                          const x2 =
-                            center + segOuterRadius * Math.cos(startAngle);
-                          const y2 =
-                            center + segOuterRadius * Math.sin(startAngle);
-                          const x3 =
-                            center + segOuterRadius * Math.cos(endAngle);
-                          const y3 =
-                            center + segOuterRadius * Math.sin(endAngle);
-                          const x4 =
-                            center + segInnerRadius * Math.cos(endAngle);
-                          const y4 =
-                            center + segInnerRadius * Math.sin(endAngle);
-
-                          const path = `M ${x1} ${y1} L ${x2} ${y2} A ${segOuterRadius} ${segOuterRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${segInnerRadius} ${segInnerRadius} 0 0 0 ${x1} ${y1} Z`;
-
-                          return (
-                            <path
-                              key={`bg-${week}-${trackIndex}`}
-                              d={path}
-                              fill="#f5f5f5"
-                              stroke="#e0e0e0"
-                              strokeWidth="0.5"
-                            />
-                          );
-                        },
-                      )}
-
-                      {/* Draw campaigns on top */}
-                      {periodSegs.map((seg) => {
-                        // Use consistent track number for this campaign
-                        const trackIndex =
-                          campaignTracks.get(seg.campaign.id) || 0;
+                return (
+                  <g key={`week-${week}`}>
+                    {/* Draw all tracks as white/light background first */}
+                    {Array.from(
+                      { length: maxConcurrentCampaigns },
+                      (_, trackIndex) => {
                         const segInnerRadius =
                           innerRadius + trackIndex * radiusStep;
                         const segOuterRadius =
@@ -372,166 +334,204 @@ export const YearClock = ({
 
                         return (
                           <path
-                            key={`seg-${week}-${seg.campaign.id}`}
+                            key={`bg-${week}-${trackIndex}`}
                             d={path}
-                            fill={seg.color}
-                            stroke="white"
-                            strokeWidth="1"
-                            opacity={
-                              hoveredCampaignId === seg.campaign.id ? 1 : 0.8
-                            }
-                            style={{ cursor: "pointer" }}
-                            onMouseEnter={() =>
-                              setHoveredCampaignId(seg.campaign.id)
-                            }
-                            onMouseLeave={() => setHoveredCampaignId(null)}
-                            onClick={() => {
-                              setSelectedCampaign(seg.campaign);
-                              setModalOpened(true);
-                            }}
-                          >
-                            <title>
-                              {seg.campaign.name} - Viikko {week}
-                            </title>
-                          </path>
+                            fill={emptyFill}
+                            stroke={ringStroke}
+                            strokeWidth="0.5"
+                          />
                         );
-                      })}
+                      },
+                    )}
+
+                    {/* Draw campaigns on top */}
+                    {periodSegs.map((seg) => {
+                      // Use consistent track number for this campaign
+                      const trackIndex =
+                        campaignTracks.get(seg.campaign.id) || 0;
+                      const segInnerRadius =
+                        innerRadius + trackIndex * radiusStep;
+                      const segOuterRadius =
+                        innerRadius + (trackIndex + 1) * radiusStep;
+
+                      const startAngle =
+                        (week - 1) * anglePerWeek - Math.PI / 2;
+                      const endAngle = week * anglePerWeek - Math.PI / 2;
+
+                      const x1 = center + segInnerRadius * Math.cos(startAngle);
+                      const y1 = center + segInnerRadius * Math.sin(startAngle);
+                      const x2 = center + segOuterRadius * Math.cos(startAngle);
+                      const y2 = center + segOuterRadius * Math.sin(startAngle);
+                      const x3 = center + segOuterRadius * Math.cos(endAngle);
+                      const y3 = center + segOuterRadius * Math.sin(endAngle);
+                      const x4 = center + segInnerRadius * Math.cos(endAngle);
+                      const y4 = center + segInnerRadius * Math.sin(endAngle);
+
+                      const path = `M ${x1} ${y1} L ${x2} ${y2} A ${segOuterRadius} ${segOuterRadius} 0 0 1 ${x3} ${y3} L ${x4} ${y4} A ${segInnerRadius} ${segInnerRadius} 0 0 0 ${x1} ${y1} Z`;
+
+                      return (
+                        <path
+                          key={`seg-${week}-${seg.campaign.id}`}
+                          d={path}
+                          fill={seg.color}
+                          stroke={segmentStroke}
+                          strokeWidth="1"
+                          opacity={
+                            hoveredCampaignId === seg.campaign.id ? 1 : 0.8
+                          }
+                          style={{ cursor: "pointer" }}
+                          onMouseEnter={() =>
+                            setHoveredCampaignId(seg.campaign.id)
+                          }
+                          onMouseLeave={() => setHoveredCampaignId(null)}
+                          onClick={() => {
+                            setSelectedCampaign(seg.campaign);
+                            setModalOpened(true);
+                          }}
+                        >
+                          <title>
+                            {seg.campaign.name} - Viikko {week}
+                          </title>
+                        </path>
+                      );
+                    })}
+                  </g>
+                );
+              },
+            )}
+
+            {/* Week labels */}
+            {Array.from({ length: WEEKS_IN_YEAR }, (_, i) => i + 1).map(
+              (week) => {
+                const angle = (week - 0.5) * anglePerWeek - Math.PI / 2;
+                const labelRadius = outerRadius + 20;
+                const x = center + labelRadius * Math.cos(angle);
+                const y = center + labelRadius * Math.sin(angle);
+
+                return (
+                  <text
+                    key={`label-${week}`}
+                    x={x}
+                    y={y}
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="9"
+                    fill={labelColor}
+                  >
+                    {week}
+                  </text>
+                );
+              },
+            )}
+
+            {/* Month dividers and labels */}
+            {showMonths &&
+              Array.from({ length: MONTHS_IN_YEAR }, (_, i) => i + 1).map(
+                (month) => {
+                  // Calculate which week each month starts at (approximately)
+                  const weekInMonth = Math.floor(
+                    (month - 1) * (WEEKS_IN_YEAR / MONTHS_IN_YEAR),
+                  );
+                  const angle = weekInMonth * anglePerWeek - Math.PI / 2;
+
+                  // Draw divider line
+                  const lineInner = innerRadius - 10;
+                  const lineOuter = outerRadius + 15;
+                  const x1 = center + lineInner * Math.cos(angle);
+                  const y1 = center + lineInner * Math.sin(angle);
+                  const x2 = center + lineOuter * Math.cos(angle);
+                  const y2 = center + lineOuter * Math.sin(angle);
+
+                  // Label position
+                  const labelRadius = outerRadius + 50;
+                  const midWeek =
+                    weekInMonth + WEEKS_IN_YEAR / MONTHS_IN_YEAR / 2;
+                  const labelAngle = midWeek * anglePerWeek - Math.PI / 2;
+                  const labelX = center + labelRadius * Math.cos(labelAngle);
+                  const labelY = center + labelRadius * Math.sin(labelAngle);
+
+                  return (
+                    <g key={`month-${month}`}>
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke="#2196F3"
+                        strokeWidth="2"
+                        opacity="0.7"
+                      />
+                      <text
+                        x={labelX}
+                        y={labelY}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize="14"
+                        fontWeight="600"
+                        fill="#2196F3"
+                      >
+                        {monthNames[month - 1]}
+                      </text>
                     </g>
                   );
                 },
               )}
 
-              {/* Week labels */}
-              {Array.from({ length: WEEKS_IN_YEAR }, (_, i) => i + 1).map(
-                (week) => {
-                  const angle = (week - 0.5) * anglePerWeek - Math.PI / 2;
-                  const labelRadius = outerRadius + 20;
-                  const x = center + labelRadius * Math.cos(angle);
-                  const y = center + labelRadius * Math.sin(angle);
+            {/* Quarter dividers and labels */}
+            {showQuarters &&
+              Array.from({ length: QUARTERS_IN_YEAR }, (_, i) => i + 1).map(
+                (quarter) => {
+                  // Calculate which week each quarter starts at
+                  const weekInQuarter = Math.floor(
+                    (quarter - 1) * (WEEKS_IN_YEAR / QUARTERS_IN_YEAR),
+                  );
+                  const angle = weekInQuarter * anglePerWeek - Math.PI / 2;
+
+                  // Draw divider line
+                  const lineInner = innerRadius - 15;
+                  const lineOuter = outerRadius + 15;
+                  const x1 = center + lineInner * Math.cos(angle);
+                  const y1 = center + lineInner * Math.sin(angle);
+                  const x2 = center + lineOuter * Math.cos(angle);
+                  const y2 = center + lineOuter * Math.sin(angle);
+
+                  // Label position
+                  const labelRadius = innerRadius - 35;
+                  const midWeek =
+                    weekInQuarter + WEEKS_IN_YEAR / QUARTERS_IN_YEAR / 2;
+                  const labelAngle = midWeek * anglePerWeek - Math.PI / 2;
+                  const labelX = center + labelRadius * Math.cos(labelAngle);
+                  const labelY = center + labelRadius * Math.sin(labelAngle);
 
                   return (
-                    <text
-                      key={`label-${week}`}
-                      x={x}
-                      y={y}
-                      textAnchor="middle"
-                      dominantBaseline="middle"
-                      fontSize="9"
-                      fill="#666"
-                    >
-                      {week}
-                    </text>
+                    <g key={`quarter-${quarter}`}>
+                      <line
+                        x1={x1}
+                        y1={y1}
+                        x2={x2}
+                        y2={y2}
+                        stroke="#FF9800"
+                        strokeWidth="3"
+                        opacity="0.7"
+                      />
+                      <text
+                        x={labelX}
+                        y={labelY}
+                        textAnchor="middle"
+                        dominantBaseline="middle"
+                        fontSize="20"
+                        fontWeight="700"
+                        fill="#FF9800"
+                      >
+                        Q{quarter}
+                      </text>
+                    </g>
                   );
                 },
               )}
 
-              {/* Month dividers and labels */}
-              {showMonths &&
-                Array.from({ length: MONTHS_IN_YEAR }, (_, i) => i + 1).map(
-                  (month) => {
-                    // Calculate which week each month starts at (approximately)
-                    const weekInMonth = Math.floor(
-                      (month - 1) * (WEEKS_IN_YEAR / MONTHS_IN_YEAR),
-                    );
-                    const angle = weekInMonth * anglePerWeek - Math.PI / 2;
-
-                    // Draw divider line
-                    const lineInner = innerRadius - 10;
-                    const lineOuter = outerRadius + 15;
-                    const x1 = center + lineInner * Math.cos(angle);
-                    const y1 = center + lineInner * Math.sin(angle);
-                    const x2 = center + lineOuter * Math.cos(angle);
-                    const y2 = center + lineOuter * Math.sin(angle);
-
-                    // Label position
-                    const labelRadius = outerRadius + 50;
-                    const midWeek =
-                      weekInMonth + WEEKS_IN_YEAR / MONTHS_IN_YEAR / 2;
-                    const labelAngle = midWeek * anglePerWeek - Math.PI / 2;
-                    const labelX = center + labelRadius * Math.cos(labelAngle);
-                    const labelY = center + labelRadius * Math.sin(labelAngle);
-
-                    return (
-                      <g key={`month-${month}`}>
-                        <line
-                          x1={x1}
-                          y1={y1}
-                          x2={x2}
-                          y2={y2}
-                          stroke="#2196F3"
-                          strokeWidth="2"
-                          opacity="0.7"
-                        />
-                        <text
-                          x={labelX}
-                          y={labelY}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontSize="14"
-                          fontWeight="600"
-                          fill="#2196F3"
-                        >
-                          {monthNames[month - 1]}
-                        </text>
-                      </g>
-                    );
-                  },
-                )}
-
-              {/* Quarter dividers and labels */}
-              {showQuarters &&
-                Array.from({ length: QUARTERS_IN_YEAR }, (_, i) => i + 1).map(
-                  (quarter) => {
-                    // Calculate which week each quarter starts at
-                    const weekInQuarter = Math.floor(
-                      (quarter - 1) * (WEEKS_IN_YEAR / QUARTERS_IN_YEAR),
-                    );
-                    const angle = weekInQuarter * anglePerWeek - Math.PI / 2;
-
-                    // Draw divider line
-                    const lineInner = innerRadius - 15;
-                    const lineOuter = outerRadius + 15;
-                    const x1 = center + lineInner * Math.cos(angle);
-                    const y1 = center + lineInner * Math.sin(angle);
-                    const x2 = center + lineOuter * Math.cos(angle);
-                    const y2 = center + lineOuter * Math.sin(angle);
-
-                    // Label position
-                    const labelRadius = innerRadius - 35;
-                    const midWeek =
-                      weekInQuarter + WEEKS_IN_YEAR / QUARTERS_IN_YEAR / 2;
-                    const labelAngle = midWeek * anglePerWeek - Math.PI / 2;
-                    const labelX = center + labelRadius * Math.cos(labelAngle);
-                    const labelY = center + labelRadius * Math.sin(labelAngle);
-
-                    return (
-                      <g key={`quarter-${quarter}`}>
-                        <line
-                          x1={x1}
-                          y1={y1}
-                          x2={x2}
-                          y2={y2}
-                          stroke="#FF9800"
-                          strokeWidth="3"
-                          opacity="0.7"
-                        />
-                        <text
-                          x={labelX}
-                          y={labelY}
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                          fontSize="20"
-                          fontWeight="700"
-                          fill="#FF9800"
-                        >
-                          Q{quarter}
-                        </text>
-                      </g>
-                    );
-                  },
-                )}
-
-              {/* Center text */}
+            {/* Center text + year nav */}
+            <g>
               <text
                 x={center}
                 y={center}
@@ -539,13 +539,40 @@ export const YearClock = ({
                 dominantBaseline="middle"
                 fontSize="48"
                 fontWeight="bold"
-                fill="#333"
+                fill={centerText}
               >
-                {YEAR}
+                {year}
               </text>
-            </svg>
+              <text
+                x={center - 90}
+                y={center - 4}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="60"
+                fill={arrowColor}
+                style={{ cursor: "pointer" }}
+                onClick={() => setYear((y) => y - 1)}
+              >
+                ‹
+              </text>
+              <text
+                x={center + 90}
+                y={center - 4}
+                textAnchor="middle"
+                dominantBaseline="middle"
+                fontSize="60"
+                fill={arrowColor}
+                style={{ cursor: "pointer" }}
+                onClick={() => setYear((y) => y + 1)}
+              >
+                ›
+              </text>
+            </g>
+          </svg>
 
-            {/* Legend */}
+          {campaigns.length === 0 ? (
+            <Text>Ei kampanjoita vuodelle {year}</Text>
+          ) : (
             <div style={{ marginTop: "20px", maxWidth: "100%", width: "100%" }}>
               <Text size="lg" fw={600} mb="md">
                 Kampanjat:
@@ -557,8 +584,8 @@ export const YearClock = ({
                   gap: "10px",
                 }}
               >
-                {campaigns.map((campaign, index) => {
-                  const color = getCampaignColor(index);
+                {campaigns.map((campaign) => {
+                  const color = getCampaignColor(campaign.id);
                   const isHovered = hoveredCampaignId === campaign.id;
                   return (
                     <div
@@ -571,7 +598,9 @@ export const YearClock = ({
                         padding: "5px",
                         borderRadius: "4px",
                         transition: "background-color 0.2s",
-                        backgroundColor: isHovered ? "#f0f0f0" : "transparent",
+                        backgroundColor: isHovered
+                          ? legendHover
+                          : "transparent",
                       }}
                       onMouseEnter={() => setHoveredCampaignId(campaign.id)}
                       onMouseLeave={() => setHoveredCampaignId(null)}
@@ -604,8 +633,8 @@ export const YearClock = ({
                 })}
               </div>
             </div>
-          </>
-        )}
+          )}
+        </>
       </Container>
 
       <Campaign

@@ -22,6 +22,8 @@ import {
   type CampaignType,
   budgetPeriodLabels,
   typeLabels,
+  genderOptions,
+  ctaOptions,
 } from "../utils/campaignLabels";
 
 export interface Campaign {
@@ -57,6 +59,8 @@ interface CampaignProps {
   onClose: () => void;
   onUpdate: () => void;
 }
+
+const apiBase = "http://localhost:3000";
 
 const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
   const form = useForm({
@@ -122,18 +126,13 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
         if (m) {
           const lower = Number(m[1]);
           const upper = Number(m[2]);
-          // convert to int4range string, using exclusive upper bound like '[lower,upper)'
           payload.targetAge = `[${lower},${upper})`;
         }
       }
 
-      await axios.patch(
-        `http://localhost:3000/campaigns/${campaign.id}`,
-        payload,
-        {
-          headers: userId ? { [USER_ID_HEADER]: userId } : {},
-        },
-      );
+      await axios.patch(`${apiBase}/campaigns/${campaign.id}`, payload, {
+        headers: userId ? { [USER_ID_HEADER]: userId } : {},
+      });
       onUpdate();
       onClose();
     } catch (error) {
@@ -159,7 +158,11 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
           <Stack gap="md" mt={"lg"}>
             <Title order={5}>Yleiset</Title>
             <TextInput label="Nimi" {...form.getInputProps("name")} />
-            <TextInput label="Yritys" {...form.getInputProps("company")} />
+            <TextInput
+              label="Yritys"
+              {...form.getInputProps("company")}
+              disabled
+            />
             <TextInput label="Asiakas" {...form.getInputProps("customer")} />
             <TextInput label="Maksaja" {...form.getInputProps("payer")} />
             <NumberInput
@@ -188,8 +191,9 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
             />
             <Title order={5}>Mainonnan kohde</Title>
             <TextInput label="Ikä" {...form.getInputProps("targetAge")} />
-            <TextInput
+            <Select
               label="Sukupuoli"
+              data={genderOptions}
               {...form.getInputProps("targetGender")}
             />
             <TextInput label="Alue" {...form.getInputProps("targetArea")} />
@@ -204,7 +208,11 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
               {...form.getInputProps("mediaInfo")}
             />
             <TextInput label="url" {...form.getInputProps("url")} />
-            <TextInput label="cta" {...form.getInputProps("cta")} />
+            <Select
+              label="Toimintakutsu"
+              data={ctaOptions}
+              {...form.getInputProps("cta")}
+            />
             <Group justify="flex-end" mt="md">
               <Button onClick={onClose} variant="default">
                 Peruuta
