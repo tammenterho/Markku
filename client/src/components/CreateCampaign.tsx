@@ -156,7 +156,7 @@ const CreateCampaign = () => {
     if (!userId || !newCompanyName.trim()) return;
 
     try {
-      const res = await axios.post(`${apiBase}/companies`, {
+      await axios.post(`${apiBase}/companies`, {
         name: newCompanyName,
         creatorId: userId,
       });
