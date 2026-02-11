@@ -95,14 +95,21 @@ const Settings = () => {
       <Stack align="flex-start" mt="lg">
         <Title order={4}>Yritystiedot</Title>
         <Stack align="flex-start">
-          <Title order={5} mb="sm">
+          <Title order={5} mb="xs">
             Luo yritys
           </Title>
+          <Text size="sm" c="dimmed" mb="sm" fs={"italic"}>
+            Luo uusi yritys ja ala hallita sen kampanjoita.
+          </Text>
           <CompanyActionForm mode="create" onSuccess={fetchUserCompanies} />
 
-          <Title order={5} mb="sm">
+          <Title order={5} mb="xs" mt="md">
             Yhdistä yritys
           </Title>
+          <Text size="sm" c="dimmed" mb="sm" fs={"italic"}>
+            Syötä tähän olemassa olevan yrityksen Linkitys ID ja paina yhdistä,
+            niin näet yrityksen kampanjat.
+          </Text>
           <CompanyActionForm mode="join" onSuccess={fetchUserCompanies} />
         </Stack>
 
@@ -123,7 +130,7 @@ const Settings = () => {
             <Table.Thead>
               <Table.Tr>
                 <Table.Th>Nimi</Table.Th>
-                <Table.Th>ID</Table.Th>
+                <Table.Th>Linkitys ID</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
