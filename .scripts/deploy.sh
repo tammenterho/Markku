@@ -9,14 +9,14 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 
 # Stop current PM2 process
-pm2 stop markku || true
+pm2 stop markku-api || true
 
 # Pull the latest version of the app
 git pull origin main
 echo "New changes copied to server !"
 
 # Installing client dependencies
-cd /client
+cd client
 echo "Installing Dependencies..."
 npm install
 
