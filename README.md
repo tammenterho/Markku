@@ -1,5 +1,7 @@
 # Markku - marketing scheduler
 
+[![Deploy](https://github.com/tammenterho/Markku/actions/workflows/deploy.yml/badge.svg)](https://github.com/tammenterho/Markku/actions/workflows/deploy.yml)
+
 ## Local Development
 
 ### Start with Docker
