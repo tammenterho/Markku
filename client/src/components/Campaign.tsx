@@ -15,7 +15,7 @@ import "dayjs/locale/fi";
 import { useEffect } from "react";
 import { Title } from "@mantine/core";
 import axios from "axios";
-import { USER_ID_HEADER, STORAGE_KEYS } from "../utils/constants";
+import { USER_ID_HEADER, STORAGE_KEYS, API_BASE_URL } from "../utils/constants";
 import { formatDate, parseLocalDate } from "../utils/common";
 import {
   type BudgetPeriod,
@@ -60,7 +60,7 @@ interface CampaignProps {
   onUpdate: () => void;
 }
 
-const apiBase = "/api";
+const apiBase = API_BASE_URL;
 
 const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
   const form = useForm({

@@ -24,7 +24,7 @@ import "dayjs/locale/fi";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { STORAGE_KEYS } from "../utils/constants";
+import { STORAGE_KEYS, API_BASE_URL } from "../utils/constants";
 import { parseLocalDate } from "../utils/common";
 import { genderOptions, ctaOptions } from "../utils/campaignLabels";
 import {
@@ -36,7 +36,7 @@ import {
   IconX,
 } from "@tabler/icons-react";
 
-const apiBase = "/api";
+const apiBase = API_BASE_URL;
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
@@ -201,7 +201,7 @@ const CreateCampaign = () => {
     };
 
     try {
-      await axios.post("/api/campaigns", campaignData);
+      await axios.post(`${apiBase}/campaigns`, campaignData);
       navigate("/campaign");
     } catch (error) {
       console.error("Error creating campaign:", error);

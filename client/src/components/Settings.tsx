@@ -15,11 +15,11 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import axios from "axios";
-import { STORAGE_KEYS } from "../utils/constants";
+import { STORAGE_KEYS, API_BASE_URL } from "../utils/constants";
 import { useEffect, useState } from "react";
 import { IconCopy, IconMoon, IconSun } from "@tabler/icons-react";
 
-const apiBase = "/api";
+const apiBase = API_BASE_URL;
 
 const Settings = () => {
   const { setColorScheme } = useMantineColorScheme();
