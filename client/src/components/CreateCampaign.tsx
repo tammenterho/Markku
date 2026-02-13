@@ -138,7 +138,7 @@ const CreateCampaign = () => {
     if (!userId) return;
     try {
       const res = await axios.get(`${apiBase}/users/${userId}/companies`);
-      const companies = (res.data || []).map((c: any) => ({
+      const companies = (res.data || []).map((c: { linkId: string; name: string }) => ({
         id: c.linkId,
         name: c.name,
       }));
@@ -171,7 +171,7 @@ const CreateCampaign = () => {
 
   useEffect(() => {
     fetchUserCompanies();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const handleSubmit = async (values: typeof form.values) => {
