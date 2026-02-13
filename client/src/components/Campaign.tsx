@@ -11,6 +11,7 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { DateTimePicker } from "@mantine/dates";
+import "@mantine/dates/styles.css";
 import "dayjs/locale/fi";
 import { useEffect } from "react";
 import { Title } from "@mantine/core";

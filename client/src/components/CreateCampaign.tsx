@@ -20,6 +20,8 @@ import {
 import { Dropzone, IMAGE_MIME_TYPE } from "@mantine/dropzone";
 import { useForm } from "@mantine/form";
 import { DateTimePicker } from "@mantine/dates";
+import "@mantine/dropzone/styles.css";
+import "@mantine/dates/styles.css";
 import "dayjs/locale/fi";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
