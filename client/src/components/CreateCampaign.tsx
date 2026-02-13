@@ -16,6 +16,8 @@ import {
   SimpleGrid,
   Image,
   ActionIcon,
+  Container,
+  Box,
 } from "@mantine/core";
 import { Dropzone, IMAGE_MIME_TYPE } from "@mantine/dropzone";
 import { useForm } from "@mantine/form";
@@ -138,10 +140,12 @@ const CreateCampaign = () => {
     if (!userId) return;
     try {
       const res = await axios.get(`${apiBase}/users/${userId}/companies`);
-      const companies = (res.data || []).map((c: { linkId: string; name: string }) => ({
-        id: c.linkId,
-        name: c.name,
-      }));
+      const companies = (res.data || []).map(
+        (c: { linkId: string; name: string }) => ({
+          id: c.linkId,
+          name: c.name,
+        }),
+      );
       setUserCompanies(companies);
 
       // Avaa modaali jos ei ole yhtään yritystä
@@ -171,7 +175,6 @@ const CreateCampaign = () => {
 
   useEffect(() => {
     fetchUserCompanies();
-     
   }, []);
 
   const handleSubmit = async (values: typeof form.values) => {
@@ -263,7 +266,10 @@ const CreateCampaign = () => {
               </Button>
             )}
             {!companyCreated && (
-              <Button onClick={handleCreateCompany} disabled={!newCompanyName.trim()}>
+              <Button
+                onClick={handleCreateCompany}
+                disabled={!newCompanyName.trim()}
+              >
                 Luo yritys
               </Button>
             )}
@@ -272,230 +278,238 @@ const CreateCampaign = () => {
       </Modal>
 
       <Center>
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Title>Luo Uusi</Title>
-          <Radio.Group mb="md" {...form.getInputProps("type")}>
-            <Group mt={"md"}>
-              <Radio value="AD" label="Mainos" />
-              <Radio value="POST" label="Postaus" />
-            </Group>
-          </Radio.Group>
-          <h2>
-            <Flex align="center" gap="xs">
-              Yleiset
-              <IconBuildingSkyscraper color="#854d97" />
-            </Flex>
-          </h2>
-          <Select
-            w={"38rem"}
-            label="Yritys"
-            placeholder="Valitse yritys"
-            data={[
-              ...userCompanies.map((c) => ({ value: c.id, label: c.name })),
-              { value: "__create_new__", label: "+ Luo uusi yritys" },
-            ]}
-            {...form.getInputProps("company")}
-            onChange={(value) => {
-              if (value === "__create_new__") {
-                setCreateCompanyModalOpened(true);
-              } else {
-                form.setFieldValue("company", value || "");
-              }
-            }}
-          />
-          <TextInput w={"38rem"} label="Nimi" {...form.getInputProps("name")} />
-          {form.values.type === "AD" && (
-            <Group>
-              <TextInput
-                miw="200px"
-                label="Maksaja"
-                labelProps={{ style: { whiteSpace: "nowrap" } }}
-                {...form.getInputProps("payer")}
-              />
-              <TextInput
-                miw="200px"
-                label="Budjetti"
-                type="number"
-                labelProps={{ style: { whiteSpace: "nowrap" } }}
-                {...form.getInputProps("budget")}
-              />
-              <Radio.Group
-                name="budgetPeriod"
-                label="Budjetin käyttö"
-                {...form.getInputProps("budgetPeriod")}
-              >
-                <Group mt="xs">
-                  <Radio value="DAY" label="Päivä" />
-                  <Radio value="DURATION" label="Koko pituus" />
+        <Container size="md" w="100%" px="md">
+          <Box component="form" onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="md">
+              <Title order={2}>Luo Uusi</Title>
+              <Radio.Group mb="md" {...form.getInputProps("type")}>
+                <Group mt={"md"}>
+                  <Radio value="AD" label="Mainos" />
+                  <Radio value="POST" label="Postaus" />
                 </Group>
               </Radio.Group>
-            </Group>
-          )}
-          <Group>
-            <DateTimePicker
-              miw="200px"
-              label="Aloitus pvm"
-              labelProps={{ style: { whiteSpace: "nowrap" } }}
-              valueFormat="DD.MM.YYYY HH:mm"
-              locale="fi"
-              {...form.getInputProps("startDate")}
-            />
-            {form.values.type === "AD" && (
-              <DateTimePicker
-                miw="200px"
-                label="Lopetus pvm"
-                labelProps={{ style: { whiteSpace: "nowrap" } }}
-                valueFormat="DD.MM.YYYY HH:mm"
-                locale="fi"
-                {...form.getInputProps("endDate")}
-              />
-            )}
-          </Group>
-          {form.values.type === "AD" && (
-            <>
               <h2>
                 <Flex align="center" gap="xs">
-                  Mainonnan kohde
-                  <IconTargetArrow color="#854d97" />
+                  Yleiset
+                  <IconBuildingSkyscraper color="#854d97" />
                 </Flex>
               </h2>
-              <Group>
-                <TextInput
-                  label="Alue"
-                  labelProps={{ style: { whiteSpace: "nowrap" } }}
-                  {...form.getInputProps("targetArea")}
-                />
-                <Select
-                  label="Sukupuoli"
-                  data={genderOptions}
-                  labelProps={{ style: { whiteSpace: "nowrap" } }}
-                  {...form.getInputProps("targetGender")}
-                />
-                <Input.Wrapper
-                  label="Ikä"
-                  labelProps={{ style: { whiteSpace: "nowrap" } }}
-                  miw="200px"
-                >
-                  <RangeSlider
-                    color="blue"
-                    min={18}
-                    max={65}
-                    minRange={5}
-                    marks={[
-                      { value: 18, label: "18" },
-                      { value: 30, label: "30" },
-                      { value: 45, label: "45" },
-                      { value: 65, label: "65+" },
-                    ]}
-                    {...form.getInputProps("targetAge")}
-                  />
-                </Input.Wrapper>
-              </Group>
-            </>
-          )}
-          <h2>
-            <Flex align="center" gap="xs">
-              Mainostiedot
-              <IconAd color="#854d97" />
-            </Flex>
-          </h2>
-
-          {form.values.type === "AD" && (
-            <Textarea
-              w={"38rem"}
-              label="Otsikko"
-              {...form.getInputProps("adTitle")}
-            />
-          )}
-          <Textarea
-            w={"38rem"}
-            label={form.values.type === "AD" ? "Mainosteksti" : "Caption"}
-            {...form.getInputProps("adText")}
-          />
-          <TextInput
-            w={"38rem"}
-            label="Media info"
-            {...form.getInputProps("mediaInfo")}
-          />
-          <div>
-            <Dropzone
-              w={"38rem"}
-              mt={"md"}
-              onDrop={(acceptedFiles) => {
-                setFiles((prev) => [
-                  ...prev,
-                  ...acceptedFiles.map((file) =>
-                    Object.assign(file, {
-                      preview: URL.createObjectURL(file),
-                    }),
-                  ),
-                ]);
-              }}
-              onReject={(files) => console.log("rejected files", files)}
-              maxSize={5 * 1024 ** 2}
-              accept={IMAGE_MIME_TYPE}
-            >
-              <Group
-                justify="center"
-                gap="xl"
-                mih={100}
-                style={{ pointerEvents: "none" }}
-              >
-                <Dropzone.Accept>
-                  <IconUpload
-                    size={52}
-                    color="var(--mantine-color-blue-6)"
-                    stroke={1.5}
-                  />
-                </Dropzone.Accept>
-                <Dropzone.Reject>
-                  <IconX
-                    size={52}
-                    color="var(--mantine-color-red-6)"
-                    stroke={1.5}
-                  />
-                </Dropzone.Reject>
-                <Dropzone.Idle>
-                  <IconPhoto
-                    size={52}
-                    color="var(--mantine-color-dimmed)"
-                    stroke={1.5}
-                  />
-                </Dropzone.Idle>
-
-                <div>
-                  <Text size="xl" inline>
-                    Pudota tänne kuvia tai klikkaa ja valitse tiedosto
-                  </Text>
-                  <Text size="sm" c="dimmed" inline mt={7}>
-                    Lisää niin monta kuvaa kuin haluat. Max. koko 5mb
-                  </Text>
-                </div>
-              </Group>
-            </Dropzone>
-          </div>
-          <SimpleGrid cols={4} mt="md" w={"38rem"}>
-            {previews}
-          </SimpleGrid>
-          {form.values.type === "AD" && (
-            <>
-              <TextInput
-                w={"38rem"}
-                label="URL"
-                {...form.getInputProps("adUrl")}
-              />
               <Select
-                w={"38rem"}
-                label="Toimintakutsu"
-                data={ctaOptions}
-                {...form.getInputProps("CTA")}
+                w="100%"
+                label="Yritys"
+                placeholder="Valitse yritys"
+                data={[
+                  ...userCompanies.map((c) => ({ value: c.id, label: c.name })),
+                  { value: "__create_new__", label: "+ Luo uusi yritys" },
+                ]}
+                {...form.getInputProps("company")}
+                onChange={(value) => {
+                  if (value === "__create_new__") {
+                    setCreateCompanyModalOpened(true);
+                  } else {
+                    form.setFieldValue("company", value || "");
+                  }
+                }}
               />
-            </>
-          )}
-          <Group mt="md">
-            <Button type="submit">Luo</Button>
-          </Group>
-        </form>
+              <TextInput
+                w="100%"
+                label="Nimi"
+                {...form.getInputProps("name")}
+              />
+              {form.values.type === "AD" && (
+                <Group grow align="flex-start">
+                  <TextInput
+                    miw={{ base: "100%", sm: "200px" }}
+                    label="Maksaja"
+                    labelProps={{ style: { whiteSpace: "nowrap" } }}
+                    {...form.getInputProps("payer")}
+                  />
+                  <TextInput
+                    miw={{ base: "100%", sm: "200px" }}
+                    label="Budjetti"
+                    type="number"
+                    labelProps={{ style: { whiteSpace: "nowrap" } }}
+                    {...form.getInputProps("budget")}
+                  />
+                  <Radio.Group
+                    name="budgetPeriod"
+                    label="Budjetin käyttö"
+                    {...form.getInputProps("budgetPeriod")}
+                  >
+                    <Group mt="xs">
+                      <Radio value="DAY" label="Päivä" />
+                      <Radio value="DURATION" label="Koko pituus" />
+                    </Group>
+                  </Radio.Group>
+                </Group>
+              )}
+              <Group grow>
+                <DateTimePicker
+                  miw={{ base: "100%", sm: "200px" }}
+                  label="Aloitus pvm"
+                  labelProps={{ style: { whiteSpace: "nowrap" } }}
+                  valueFormat="DD.MM.YYYY HH:mm"
+                  locale="fi"
+                  {...form.getInputProps("startDate")}
+                />
+                {form.values.type === "AD" && (
+                  <DateTimePicker
+                    miw={{ base: "100%", sm: "200px" }}
+                    label="Lopetus pvm"
+                    labelProps={{ style: { whiteSpace: "nowrap" } }}
+                    valueFormat="DD.MM.YYYY HH:mm"
+                    locale="fi"
+                    {...form.getInputProps("endDate")}
+                  />
+                )}
+              </Group>
+              {form.values.type === "AD" && (
+                <>
+                  <h2>
+                    <Flex align="center" gap="xs">
+                      Mainonnan kohde
+                      <IconTargetArrow color="#854d97" />
+                    </Flex>
+                  </h2>
+                  <Group grow align="flex-start">
+                    <TextInput
+                      label="Alue"
+                      labelProps={{ style: { whiteSpace: "nowrap" } }}
+                      {...form.getInputProps("targetArea")}
+                    />
+                    <Select
+                      label="Sukupuoli"
+                      data={genderOptions}
+                      labelProps={{ style: { whiteSpace: "nowrap" } }}
+                      {...form.getInputProps("targetGender")}
+                    />
+                    <Input.Wrapper
+                      label="Ikä"
+                      labelProps={{ style: { whiteSpace: "nowrap" } }}
+                      miw={{ base: "100%", sm: "200px" }}
+                    >
+                      <RangeSlider
+                        color="blue"
+                        min={18}
+                        max={65}
+                        minRange={5}
+                        marks={[
+                          { value: 18, label: "18" },
+                          { value: 30, label: "30" },
+                          { value: 45, label: "45" },
+                          { value: 65, label: "65+" },
+                        ]}
+                        {...form.getInputProps("targetAge")}
+                      />
+                    </Input.Wrapper>
+                  </Group>
+                </>
+              )}
+              <h2>
+                <Flex align="center" gap="xs">
+                  Mainostiedot
+                  <IconAd color="#854d97" />
+                </Flex>
+              </h2>
+
+              {form.values.type === "AD" && (
+                <Textarea
+                  w="100%"
+                  label="Otsikko"
+                  {...form.getInputProps("adTitle")}
+                />
+              )}
+              <Textarea
+                w="100%"
+                label={form.values.type === "AD" ? "Mainosteksti" : "Caption"}
+                {...form.getInputProps("adText")}
+              />
+              <TextInput
+                w="100%"
+                label="Media info"
+                {...form.getInputProps("mediaInfo")}
+              />
+              <div>
+                <Dropzone
+                  w="100%"
+                  mt={"md"}
+                  onDrop={(acceptedFiles) => {
+                    setFiles((prev) => [
+                      ...prev,
+                      ...acceptedFiles.map((file) =>
+                        Object.assign(file, {
+                          preview: URL.createObjectURL(file),
+                        }),
+                      ),
+                    ]);
+                  }}
+                  onReject={(files) => console.log("rejected files", files)}
+                  maxSize={5 * 1024 ** 2}
+                  accept={IMAGE_MIME_TYPE}
+                >
+                  <Group
+                    justify="center"
+                    gap="xl"
+                    mih={100}
+                    style={{ pointerEvents: "none" }}
+                  >
+                    <Dropzone.Accept>
+                      <IconUpload
+                        size={52}
+                        color="var(--mantine-color-blue-6)"
+                        stroke={1.5}
+                      />
+                    </Dropzone.Accept>
+                    <Dropzone.Reject>
+                      <IconX
+                        size={52}
+                        color="var(--mantine-color-red-6)"
+                        stroke={1.5}
+                      />
+                    </Dropzone.Reject>
+                    <Dropzone.Idle>
+                      <IconPhoto
+                        size={52}
+                        color="var(--mantine-color-dimmed)"
+                        stroke={1.5}
+                      />
+                    </Dropzone.Idle>
+
+                    <div>
+                      <Text size="xl" inline>
+                        Pudota tänne kuvia tai klikkaa ja valitse tiedosto
+                      </Text>
+                      <Text size="sm" c="dimmed" inline mt={7}>
+                        Lisää niin monta kuvaa kuin haluat. Max. koko 5mb
+                      </Text>
+                    </div>
+                  </Group>
+                </Dropzone>
+              </div>
+              <SimpleGrid cols={{ base: 2, sm: 3, md: 4 }} mt="md" w="100%">
+                {previews}
+              </SimpleGrid>
+              {form.values.type === "AD" && (
+                <>
+                  <TextInput
+                    w="100%"
+                    label="URL"
+                    {...form.getInputProps("adUrl")}
+                  />
+                  <Select
+                    w="100%"
+                    label="Toimintakutsu"
+                    data={ctaOptions}
+                    {...form.getInputProps("CTA")}
+                  />
+                </>
+              )}
+              <Group mt="md">
+                <Button type="submit">Luo</Button>
+              </Group>
+            </Stack>
+          </Box>
+        </Container>
       </Center>
     </>
   );

@@ -12,7 +12,9 @@ import {
   SegmentedControl,
   Menu,
   Checkbox,
+  ScrollArea,
 } from "@mantine/core";
+import { useMediaQuery } from "@mantine/hooks";
 import {
   IconCircleCheck,
   IconCircleMinus,
@@ -44,6 +46,7 @@ type ViewType = "list" | "clock";
 
 export const CampaignList = () => {
   const navigate = useNavigate();
+  const isMobile = useMediaQuery("(max-width: 48em)");
   const [campaigns, setCampaigns] = useState<CampaignType[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -67,9 +70,6 @@ export const CampaignList = () => {
     { key: "status", label: "Tila", visible: true },
     { key: "actions", label: "Toiminnot", visible: true },
     // Hidden by default
-    { key: "id", label: "ID", visible: false },
-    { key: "clientId", label: "Client ID", visible: false },
-    { key: "companyId", label: "Company ID", visible: false },
     { key: "customer", label: "Asiakas", visible: false },
     { key: "payer", label: "Maksaja", visible: false },
     { key: "copyText", label: "Teksti", visible: false },
@@ -387,33 +387,56 @@ export const CampaignList = () => {
             <Button
               variant={filter === "past" ? "filled" : "outline"}
               onClick={() => setFilter("past")}
+              aria-label="Menneet"
               leftSection={
+                !isMobile ? (
+                  <IconTriangleFilled
+                    size={12}
+                    style={{ transform: "rotate(-90deg)" }}
+                  />
+                ) : undefined
+              }
+            >
+              {isMobile ? (
                 <IconTriangleFilled
                   size={12}
                   style={{ transform: "rotate(-90deg)" }}
                 />
-              }
-            >
-              Menneet
+              ) : (
+                "Menneet"
+              )}
             </Button>
             <Button
               variant={filter === "current" ? "filled" : "outline"}
               onClick={() => setFilter("current")}
-              leftSection={<IconCircleFilled size={10} />}
+              aria-label="Käynnissä"
+              leftSection={
+                !isMobile ? <IconCircleFilled size={10} /> : undefined
+              }
             >
-              Käynnissä
+              {isMobile ? <IconCircleFilled size={10} /> : "Käynnissä"}
             </Button>
             <Button
               variant={filter === "future" ? "filled" : "outline"}
               onClick={() => setFilter("future")}
+              aria-label="Tulevat"
               leftSection={
+                !isMobile ? (
+                  <IconTriangleFilled
+                    size={12}
+                    style={{ transform: "rotate(90deg)" }}
+                  />
+                ) : undefined
+              }
+            >
+              {isMobile ? (
                 <IconTriangleFilled
                   size={12}
                   style={{ transform: "rotate(90deg)" }}
                 />
-              }
-            >
-              Tulevat
+              ) : (
+                "Tulevat"
+              )}
             </Button>
           </Group>
           <Group mb="md">
@@ -458,31 +481,28 @@ export const CampaignList = () => {
           {filteredCampaigns.length === 0 ? (
             <Text>{getEmptyMessage()}</Text>
           ) : (
-            <Table
-              striped
-              withTableBorder
-              withColumnBorders
-              verticalSpacing="md"
-            >
-              <Table.Thead>
-                <Table.Tr>
-                  {columns
-                    .filter((c) => c.visible)
-                    .map((col) =>
-                      col.key === "actions" ? (
-                        <Table.Th key={col.key}>{col.label}</Table.Th>
-                      ) : (
-                        <SortableHeader
-                          key={col.key}
-                          label={col.label}
-                          sortBy={col.key as SortKey}
-                        />
-                      ),
-                    )}
-                </Table.Tr>
-              </Table.Thead>
-              <Table.Tbody>{rows}</Table.Tbody>
-            </Table>
+            <ScrollArea type="auto">
+              <Table miw={1200} striped withTableBorder withColumnBorders>
+                <Table.Thead>
+                  <Table.Tr>
+                    {columns
+                      .filter((c) => c.visible)
+                      .map((col) =>
+                        col.key === "actions" ? (
+                          <Table.Th key={col.key}>{col.label}</Table.Th>
+                        ) : (
+                          <SortableHeader
+                            key={col.key}
+                            label={col.label}
+                            sortBy={col.key as SortKey}
+                          />
+                        ),
+                      )}
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>{rows}</Table.Tbody>
+              </Table>
+            </ScrollArea>
           )}
         </>
       )}

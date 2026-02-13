@@ -120,7 +120,6 @@ const Settings = () => {
           <Text c="dimmed">Ei yrityksiä</Text>
         ) : (
           <Table
-            w={"40%"}
             striped
             highlightOnHover
             withTableBorder

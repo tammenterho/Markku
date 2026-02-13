@@ -5,7 +5,7 @@ import Navbar from "./components/Navbar";
 import RouterSwitcher from "./components/RouterSwitcher";
 
 function App() {
-  const [opened, { toggle }] = useDisclosure();
+  const [opened, { toggle, close }] = useDisclosure();
   const isAuthenticated = Boolean(localStorage.getItem("accessToken"));
 
   if (!isAuthenticated) {
@@ -23,7 +23,7 @@ function App() {
       }}
     >
       <Header toggle={toggle} opened={opened} />
-      <Navbar />
+      <Navbar close={close} />
       <AppShell.Main>
         <RouterSwitcher />
       </AppShell.Main>

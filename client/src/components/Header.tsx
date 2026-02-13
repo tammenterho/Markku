@@ -27,7 +27,12 @@ const Header = ({ toggle, opened }: HeaderProps) => {
           <Text size="sm" c="dimmed">
             {username ? `Signed in as ${username}` : "Signed in"}
           </Text>
-          <Button size="xs" variant="light" onClick={handleLogout} leftSection={<IconLogout />}>
+          <Button
+            size="xs"
+            variant="light"
+            onClick={handleLogout}
+            leftSection={<IconLogout />}
+          >
             Logout
           </Button>
         </Group>
