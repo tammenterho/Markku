@@ -5,14 +5,22 @@ import {
   IconCalendarEvent,
   IconSettings,
 } from "@tabler/icons-react";
-
-const Navbar = () => {
+interface NavbarProps {
+  close: () => void;
+}
+const Navbar = ({ close }: NavbarProps) => {
   const navigate = useNavigate();
+
+  const handleNavClick = (path: string) => {
+    navigate(path);
+    close();
+  };
+
   return (
     <AppShell.Navbar>
       <NavLink
         label="Luo Uusi"
-        onClick={() => navigate("/new")}
+        onClick={() => handleNavClick("/new")}
         leftSection={
           <IconCirclePlus
             color="green" // set `stroke` color
@@ -21,12 +29,12 @@ const Navbar = () => {
       />
       <NavLink
         label="Kampanjat"
-        onClick={() => navigate("/campaign")}
+        onClick={() => handleNavClick("/campaign")}
         leftSection={<IconCalendarEvent />}
       />
       <NavLink
         label="Asetukset"
-        onClick={() => navigate("/settings")}
+        onClick={() => handleNavClick("/settings")}
         leftSection={<IconSettings />}
       />
     </AppShell.Navbar>
