@@ -122,7 +122,7 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
 
     try {
       const userId = getUserId();
-      const payload = { ...values } as any;
+      const payload = { ...values };
       if (typeof values.targetAge === "string") {
         const m = values.targetAge.match(/^(\d+)-(\d+)$/);
         if (m) {

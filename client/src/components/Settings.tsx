@@ -20,6 +20,11 @@ import { getUserId } from "../utils/auth";
 import { useEffect, useState } from "react";
 import { IconCopy, IconMoon, IconSun } from "@tabler/icons-react";
 
+interface CompanyResponse {
+  linkId: string;
+  name: string;
+}
+
 const apiBase = API_BASE_URL;
 
 const Settings = () => {
@@ -36,9 +41,11 @@ const Settings = () => {
     const userId = getUserId();
     if (!userId) return;
     try {
-      const res = await axios.get(`${apiBase}/users/${userId}/companies`);
+      const res = await axios.get<CompanyResponse[]>(
+        `${apiBase}/users/${userId}/companies`,
+      );
       setUserCompanies(
-        (res.data || []).map((c: any) => ({ id: c.linkId, name: c.name })),
+        (res.data || []).map((c) => ({ id: c.linkId, name: c.name })),
       );
     } catch (err) {
       console.error("Error fetching user companies:", err);
