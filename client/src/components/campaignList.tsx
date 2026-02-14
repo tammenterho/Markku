@@ -61,7 +61,7 @@ export const CampaignList = () => {
 
   const [columns, setColumns] = useState([
     { key: "company", label: "Yritys", visible: true },
-    { key: "name", label: "Nimi", visible: true },
+    { key: "name", label: "Kampanjanimi", visible: true },
     { key: "title", label: "Otsikko", visible: true },
     { key: "start", label: "Alku pvm", visible: true },
     { key: "end", label: "Loppu pvm", visible: true },

@@ -313,7 +313,7 @@ const CreateCampaign = () => {
               />
               <TextInput
                 w="100%"
-                label="Nimi"
+                label="Kampanjanimi"
                 {...form.getInputProps("name")}
               />
               {form.values.type === "AD" && (

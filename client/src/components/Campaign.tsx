@@ -158,7 +158,7 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
           </Text>
           <Stack gap="md" mt={"lg"}>
             <Title order={5}>Yleiset</Title>
-            <TextInput label="Nimi" {...form.getInputProps("name")} />
+            <TextInput label="Kampanjanimi" {...form.getInputProps("name")} />
             <TextInput
               label="Yritys"
               {...form.getInputProps("company")}
