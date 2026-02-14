@@ -3,12 +3,28 @@ import { render, screen, waitFor } from "../utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import Login from "./Login";
 import * as authUtils from "../utils/auth";
-import axios from "axios";
 
-vi.mock("axios");
+vi.mock("axios", () => ({
+  default: {
+    post: vi.fn(),
+    get: vi.fn(),
+    isAxiosError: vi.fn((error: unknown) => {
+      return (
+        typeof error === "object" && error !== null && "isAxiosError" in error
+      );
+    }),
+  },
+}));
+
 vi.mock("../utils/auth");
 
-const mockAxios = axios as any;
+import axios from "axios";
+
+const mockAxios = axios as unknown as {
+  post: ReturnType<typeof vi.fn>;
+  get: ReturnType<typeof vi.fn>;
+  isAxiosError: ReturnType<typeof vi.fn>;
+};
 
 describe("Login Component", () => {
   beforeEach(() => {
@@ -46,8 +62,11 @@ describe("Login Component", () => {
     vi.spyOn(authUtils, "setUserId").mockImplementation(vi.fn());
 
     const originalLocation = window.location;
-    delete (window as any).location;
-    (window as any).location = { href: "" };
+    delete (window as unknown as Record<string, unknown>).location;
+    Object.defineProperty(window, "location", {
+      value: { href: "" },
+      writable: true,
+    });
 
     render(<Login />);
 
@@ -77,7 +96,10 @@ describe("Login Component", () => {
       expect(authUtils.setUserId).toHaveBeenCalledWith("user-123");
     });
 
-    (window as any).location = originalLocation;
+    Object.defineProperty(window, "location", {
+      value: originalLocation,
+      writable: true,
+    });
   });
 
   it("should display error message on login failure", async () => {
