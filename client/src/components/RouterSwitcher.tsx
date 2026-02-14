@@ -1,5 +1,6 @@
 import { Suspense, lazy, type ReactNode } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
+import { isAuthenticated } from "../utils/auth";
 
 const NotFound = lazy(() => import("./NotFound"));
 const CreateCampaign = lazy(() => import("./CreateCampaign"));
@@ -8,8 +9,6 @@ const CampaignList = lazy(() =>
 );
 const Settings = lazy(() => import("./Settings"));
 const Login = lazy(() => import("./Login"));
-
-const isAuthenticated = () => Boolean(localStorage.getItem("accessToken"));
 
 const RequireAuth = ({ children }: { children: ReactNode }) => {
   if (!isAuthenticated()) {

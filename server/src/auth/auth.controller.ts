@@ -1,7 +1,8 @@
-import { Controller, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
+import type { Response } from 'express';
 import { User } from 'src/users/users.entity';
 
 @Controller('auth')
@@ -16,7 +17,46 @@ export class AuthController {
 
   @Post('signin')
   @UseGuards(AuthGuard('local'))
-  signin(@Req() req: Request) {
-    return this.authService.login(req.user as User);
+  signin(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const { accessToken, refreshToken } = this.authService.login(
+      req.user as User,
+    );
+    this.setRefreshCookie(res, refreshToken);
+    return { accessToken };
+  }
+
+  @Post('refresh')
+  refresh(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+    const { accessToken, refreshToken } = this.authService.refresh(
+      req.cookies?.refreshToken,
+    );
+    this.setRefreshCookie(res, refreshToken);
+    return { accessToken };
+  }
+
+  @Post('logout')
+  logout(@Res({ passthrough: true }) res: Response) {
+    this.clearRefreshCookie(res);
+    return { success: true };
+  }
+
+  private setRefreshCookie(res: Response, token: string) {
+    const maxAge = 3 * 24 * 60 * 60 * 1000;
+    res.cookie('refreshToken', token, {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/auth/refresh',
+      maxAge,
+    });
+  }
+
+  private clearRefreshCookie(res: Response) {
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/auth/refresh',
+    });
   }
 }

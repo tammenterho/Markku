@@ -13,7 +13,13 @@ import {
 import { useForm } from "@mantine/form";
 import { IconLogin } from "@tabler/icons-react";
 import axios from "axios";
-import { API_BASE_URL, STORAGE_KEYS } from "../utils/constants";
+import { API_BASE_URL } from "../utils/constants";
+import {
+  markActivity,
+  setAccessToken,
+  setUserCompanies,
+  setUserId,
+} from "../utils/auth";
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -38,16 +44,18 @@ const Login = () => {
     setError(null);
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/signin`, {
-        username: values.username,
-        password: values.password,
-      });
+      const response = await axios.post(
+        `${API_BASE_URL}/auth/signin`,
+        {
+          username: values.username,
+          password: values.password,
+        },
+        { withCredentials: true },
+      );
 
       if (response.data.accessToken) {
-        localStorage.setItem(
-          STORAGE_KEYS.ACCESS_TOKEN,
-          response.data.accessToken,
-        );
+        setAccessToken(response.data.accessToken);
+        markActivity();
 
         // Hae käyttäjän tiedot ja tallenna companies localStorageen
         try {
@@ -55,13 +63,10 @@ const Login = () => {
             `${API_BASE_URL}/users/${values.username}`,
           );
           if (userResponse.data.companies) {
-            localStorage.setItem(
-              STORAGE_KEYS.USER_COMPANIES,
-              JSON.stringify(userResponse.data.companies),
-            );
+            setUserCompanies(userResponse.data.companies);
           }
           if (userResponse.data.id) {
-            localStorage.setItem(STORAGE_KEYS.USER_ID, userResponse.data.id);
+            setUserId(userResponse.data.id);
           }
         } catch (err) {
           console.error("Error fetching user data:", err);

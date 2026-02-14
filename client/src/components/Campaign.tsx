@@ -16,7 +16,8 @@ import "dayjs/locale/fi";
 import { useEffect } from "react";
 import { Title } from "@mantine/core";
 import axios from "axios";
-import { USER_ID_HEADER, STORAGE_KEYS, API_BASE_URL } from "../utils/constants";
+import { USER_ID_HEADER, API_BASE_URL } from "../utils/constants";
+import { getUserId } from "../utils/auth";
 import { formatDate, parseLocalDate } from "../utils/common";
 import {
   type BudgetPeriod,
@@ -120,7 +121,7 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
     if (!campaign) return;
 
     try {
-      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      const userId = getUserId();
       const payload = { ...values } as any;
       if (typeof values.targetAge === "string") {
         const m = values.targetAge.match(/^(\d+)-(\d+)$/);
