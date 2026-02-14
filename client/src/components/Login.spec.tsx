@@ -61,12 +61,7 @@ describe("Login Component", () => {
     vi.spyOn(authUtils, "setUserCompanies").mockImplementation(vi.fn());
     vi.spyOn(authUtils, "setUserId").mockImplementation(vi.fn());
 
-    const originalLocation = window.location;
-    delete (window as unknown as Record<string, unknown>).location;
-    Object.defineProperty(window, "location", {
-      value: { href: "" },
-      writable: true,
-    });
+    vi.stubGlobal("location", { href: "" } as Location);
 
     render(<Login />);
 
@@ -95,11 +90,6 @@ describe("Login Component", () => {
       expect(authUtils.setUserCompanies).toHaveBeenCalledWith(["company-1"]);
       expect(authUtils.setUserId).toHaveBeenCalledWith("user-123");
     });
-
-    Object.defineProperty(window, "location", {
-      value: originalLocation,
-      writable: true,
-    });
   });
 
   it("should display error message on login failure", async () => {
@@ -123,9 +113,7 @@ describe("Login Component", () => {
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Login failed. Please try again/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/Invalid credentials/i)).toBeInTheDocument();
     });
   });
 
