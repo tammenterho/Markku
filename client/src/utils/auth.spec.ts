@@ -22,6 +22,20 @@ vi.mock("axios", () => ({
   },
 }));
 
+const toBase64Url = (value: Record<string, string | number>): string => {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  let binary = "";
+
+  for (const byte of bytes) {
+    binary += String.fromCharCode(byte);
+  }
+
+  return btoa(binary)
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=/g, "");
+};
+
 describe("Auth Utils", () => {
   beforeEach(() => {
     localStorage.clear();
@@ -66,29 +80,19 @@ describe("Auth Utils", () => {
     it("should detect valid (non-expired) token", () => {
       // Token with exp far in future (year 2100)
       const futureTime = Math.floor(new Date(2100, 0, 1).getTime() / 1000);
-      const validToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
-        JSON.stringify({
+      const validToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${toBase64Url(
+        {
           exp: futureTime,
           sub: "user-123",
           username: "testuser",
-        }),
-      )
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "")}.signature`;
+        },
+      )}.signature`;
 
       expect(isTokenExpired(validToken)).toBe(false);
     });
 
     it("should return true for token with no exp", () => {
-      const tokenNoExp = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
-        JSON.stringify({ sub: "user-123" }),
-      )
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "")}.signature`;
+      const tokenNoExp = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${toBase64Url({ sub: "user-123" })}.signature`;
 
       expect(isTokenExpired(tokenNoExp)).toBe(true);
     });
@@ -97,17 +101,13 @@ describe("Auth Utils", () => {
   describe("Username Extraction", () => {
     it("should extract username from token", () => {
       const futureTime = Math.floor(new Date(2100, 0, 1).getTime() / 1000);
-      const token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
-        JSON.stringify({
+      const token = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${toBase64Url(
+        {
           exp: futureTime,
           sub: "user-123",
           username: "john",
-        }),
-      )
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "")}.signature`;
+        },
+      )}.signature`;
 
       expect(getUsernameFromToken(token)).toBe("john");
     });
@@ -131,17 +131,13 @@ describe("Auth Utils", () => {
 
     it("should return true for valid token", () => {
       const futureTime = Math.floor(new Date(2100, 0, 1).getTime() / 1000);
-      const validToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${Buffer.from(
-        JSON.stringify({
+      const validToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${toBase64Url(
+        {
           exp: futureTime,
           sub: "user-123",
           username: "testuser",
-        }),
-      )
-        .toString("base64")
-        .replace(/\+/g, "-")
-        .replace(/\//g, "_")
-        .replace(/=/g, "")}.signature`;
+        },
+      )}.signature`;
 
       setAccessToken(validToken);
       expect(isAuthenticated()).toBe(true);
