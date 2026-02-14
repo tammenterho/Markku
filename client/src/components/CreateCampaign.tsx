@@ -28,7 +28,8 @@ import "dayjs/locale/fi";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { STORAGE_KEYS, API_BASE_URL } from "../utils/constants";
+import { API_BASE_URL } from "../utils/constants";
+import { getUserId } from "../utils/auth";
 import { parseLocalDate } from "../utils/common";
 import { genderOptions, ctaOptions } from "../utils/campaignLabels";
 import {
@@ -136,7 +137,7 @@ const CreateCampaign = () => {
   });
 
   const fetchUserCompanies = async () => {
-    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    const userId = getUserId();
     if (!userId) return;
     try {
       const res = await axios.get(`${apiBase}/users/${userId}/companies`);
@@ -158,7 +159,7 @@ const CreateCampaign = () => {
   };
 
   const handleCreateCompany = async () => {
-    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    const userId = getUserId();
     if (!userId || !newCompanyName.trim()) return;
 
     try {
@@ -313,7 +314,7 @@ const CreateCampaign = () => {
               />
               <TextInput
                 w="100%"
-                label="Nimi"
+                label="Kampanjanimi"
                 {...form.getInputProps("name")}
               />
               {form.values.type === "AD" && (

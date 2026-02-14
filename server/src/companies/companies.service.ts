@@ -62,6 +62,7 @@ export class CompaniesService {
         "targetGender" varchar(50),
         "title" varchar(255),
         "copyText" text,
+        "status" boolean NOT NULL DEFAULT false,
         "url" varchar(255),
         "cta" varchar(255),
         "createdBy" varchar(255) NOT NULL,

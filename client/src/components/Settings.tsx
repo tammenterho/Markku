@@ -15,7 +15,8 @@ import {
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import axios from "axios";
-import { STORAGE_KEYS, API_BASE_URL } from "../utils/constants";
+import { API_BASE_URL } from "../utils/constants";
+import { getUserId } from "../utils/auth";
 import { useEffect, useState } from "react";
 import { IconCopy, IconMoon, IconSun } from "@tabler/icons-react";
 
@@ -32,7 +33,7 @@ const Settings = () => {
   >([]);
 
   const fetchUserCompanies = async () => {
-    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    const userId = getUserId();
     if (!userId) return;
     try {
       const res = await axios.get(`${apiBase}/users/${userId}/companies`);
@@ -47,9 +48,7 @@ const Settings = () => {
   const handleCopyId = (id: string) => {
     navigator.clipboard
       .writeText(id)
-      .then(() => {
-        console.log("ID copied to clipboard:", id);
-      })
+      .then(() => {})
       .catch((err) => {
         console.error("Failed to copy:", err);
       });
@@ -176,7 +175,7 @@ const CompanyActionForm = ({
   });
 
   const handleSubmit = async (values: typeof form.values) => {
-    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    const userId = getUserId();
     if (!userId) {
       alert("Et ole kirjautunut sisään");
       return;
@@ -184,12 +183,10 @@ const CompanyActionForm = ({
 
     try {
       if (mode === "create") {
-        const res = await axios.post(`${apiBase}/companies`, {
+        await axios.post(`${apiBase}/companies`, {
           name: values.input,
           creatorId: userId,
         });
-        alert(`Yritys luotu: ${res.data.name} (${res.data.id})`);
-        console.log("Company created:", values.input);
       } else {
         if (!values.input) {
           alert("Syötä yrityksen UUID");

@@ -27,7 +27,6 @@ export class UsersController {
 
   @Get(':id/companies')
   async getUserCompanies(@Param('id') id: string) {
-    console.log(`Getting companies for user ID: ${id}`);
     const user = await this.usersService.findById(id);
     if (!user || !user.companies) return [];
     return Promise.all(

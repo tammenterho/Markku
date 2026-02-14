@@ -37,7 +37,8 @@ import {
 import { formatAgeRange, formatDate } from "../utils/common";
 import { YearClock } from "./YearClock";
 import classes from "./campaignList.module.css";
-import { API_BASE_URL, STORAGE_KEYS, USER_ID_HEADER } from "../utils/constants";
+import { API_BASE_URL, USER_ID_HEADER } from "../utils/constants";
+import { getUserId } from "../utils/auth";
 
 type SortKey = keyof CampaignType | null;
 type SortDirection = "asc" | "desc";
@@ -61,7 +62,7 @@ export const CampaignList = () => {
 
   const [columns, setColumns] = useState([
     { key: "company", label: "Yritys", visible: true },
-    { key: "name", label: "Nimi", visible: true },
+    { key: "name", label: "Kampanjanimi", visible: true },
     { key: "title", label: "Otsikko", visible: true },
     { key: "start", label: "Alku pvm", visible: true },
     { key: "end", label: "Loppu pvm", visible: true },
@@ -88,8 +89,8 @@ export const CampaignList = () => {
   const fetchCampaigns = () => {
     setLoading(true);
 
-    // Hae käyttäjän id localStoragesta
-    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+    // Hae käyttäjän id tallennuksesta
+    const userId = getUserId();
 
     axios
       .get(`${API_BASE_URL}/campaigns`, {
@@ -165,10 +166,7 @@ export const CampaignList = () => {
   ) => {
     e.stopPropagation();
     const newStatus = !campaignToUpdate.status;
-    const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
-
-    console.log("Updating campaign, userId:", userId);
-    console.log("Headers:", { [USER_ID_HEADER]: userId });
+    const userId = getUserId();
 
     try {
       await axios.patch(
@@ -199,7 +197,7 @@ export const CampaignList = () => {
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
     if (window.confirm("Haluatko varmasti poistaa tämän kampanjan?")) {
-      const userId = localStorage.getItem(STORAGE_KEYS.USER_ID);
+      const userId = getUserId();
 
       try {
         await axios.delete(`${API_BASE_URL}/campaigns/${id}`, {

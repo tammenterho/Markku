@@ -1,5 +1,5 @@
 import { AppShell, Burger, Button, Group, Text } from "@mantine/core";
-import { getUsernameFromToken } from "../utils/auth";
+import { getUsernameFromToken, logout } from "../utils/auth";
 import { IconLogout } from "@tabler/icons-react";
 
 interface HeaderProps {
@@ -8,11 +8,10 @@ interface HeaderProps {
 }
 
 const Header = ({ toggle, opened }: HeaderProps) => {
-  const username = getUsernameFromToken(localStorage.getItem("accessToken"));
+  const username = getUsernameFromToken();
 
   const handleLogout = () => {
-    localStorage.removeItem("accessToken");
-    window.location.href = "/login";
+    logout();
   };
 
   return (
