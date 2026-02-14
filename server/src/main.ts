@@ -1,10 +1,12 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import cookieParser from 'cookie-parser';
+import type { RequestHandler } from 'express';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  app.use(cookieParser());
+  const createCookieParser = cookieParser as unknown as () => RequestHandler;
+  app.use(createCookieParser());
   app.enableCors({
     origin: 'http://localhost:5173',
     credentials: true,
@@ -14,4 +16,4 @@ async function bootstrap() {
   await app.listen(3000);
 }
 
-bootstrap();
+void bootstrap();
