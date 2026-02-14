@@ -1,5 +1,5 @@
 # Markku - marketing scheduler
-
+[![Run Tests](https://github.com/tammenterho/Markku/actions/workflows/tests.yml/badge.svg)](https://github.com/tammenterho/Markku/actions/workflows/tests.yml)
 [![Deploy](https://github.com/tammenterho/Markku/actions/workflows/deploy.yml/badge.svg)](https://github.com/tammenterho/Markku/actions/workflows/deploy.yml)
 
 Markku is a full-stack campaign and marketing scheduling application with a React frontend, NestJS backend, and PostgreSQL database.
