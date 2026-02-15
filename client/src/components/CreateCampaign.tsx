@@ -47,6 +47,11 @@ const CreateCampaign = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const copiedCampaign = location.state?.campaign;
+  const copiedImageUrls = Array.isArray(copiedCampaign?.imageUrls)
+    ? copiedCampaign.imageUrls.filter(
+        (value: unknown): value is string => typeof value === "string",
+      )
+    : [];
 
   const [files, setFiles] = useState<(File & { preview: string })[]>([]);
   const [userCompanies, setUserCompanies] = useState<
@@ -194,18 +199,32 @@ const CreateCampaign = () => {
           },
         });
 
-        uploadedImageUrls = Array.isArray(uploadResponse.data?.files)
-          ? uploadResponse.data.files
-              .map((file: { url?: string; path?: string }) =>
-                file.path ? `${apiBase}${file.path}` : file.url || "",
-              )
-              .filter(Boolean)
-          : [];
+        if (Array.isArray(uploadResponse.data?.files)) {
+          uploadedImageUrls = uploadResponse.data.files
+            .map((file: { url?: string; path?: string }) =>
+              file.path ? `${apiBase}${file.path}` : file.url || "",
+            )
+            .filter(Boolean);
+        } else if (typeof uploadResponse.data?.path === "string") {
+          uploadedImageUrls = [`${apiBase}${uploadResponse.data.path}`];
+        } else if (typeof uploadResponse.data?.filename === "string") {
+          uploadedImageUrls = [
+            `${apiBase}/uploads/${uploadResponse.data.filename}`,
+          ];
+        }
+
+        if (files.length > 0 && uploadedImageUrls.length === 0) {
+          throw new Error("Upload response did not contain file URLs");
+        }
       } catch (error) {
         console.error("Error uploading images:", error);
         return;
       }
     }
+
+    const imageUrls = [...copiedImageUrls, ...uploadedImageUrls].filter(
+      (value, index, arr) => arr.indexOf(value) === index,
+    );
 
     const campaignData = {
       clientId: "659e7d23473b8d69cb77c2fb",
@@ -220,7 +239,7 @@ const CreateCampaign = () => {
       budget: Number(values.budget) || 0,
       budgetPeriod: values.budgetPeriod,
       mediaInfo: values.mediaInfo,
-      imageUrls: uploadedImageUrls,
+      imageUrls,
       start: values.startDate,
       end: values.endDate,
       targetArea: values.targetArea,
