@@ -28,6 +28,12 @@ export class CampaignsService {
     return `${TENANT_PREFIX}${companyId}`;
   }
 
+  private async ensureCampaignImageUrlsColumn(schema: string): Promise<void> {
+    await this.dataSource.query(
+      `ALTER TABLE "${schema}".campaigns ADD COLUMN IF NOT EXISTS "imageUrls" text[] DEFAULT '{}'`,
+    );
+  }
+
   private async findCampaignInSchemas(
     campaignId: string,
     companyIds: string[],
@@ -97,6 +103,7 @@ export class CampaignsService {
 
     this.logger.log(`Creating campaign in company ${company.id}`);
     const schema = this.getSchemaName(company.id);
+    await this.ensureCampaignImageUrlsColumn(schema);
 
     // Validoi ja filtteröi kentät
     const allowedFields = CAMPAIGN_ALLOWED_FIELDS as readonly string[];
@@ -138,6 +145,8 @@ export class CampaignsService {
     if (!found) {
       throw new NotFoundException(`Campaign ${id} not found`);
     }
+
+    await this.ensureCampaignImageUrlsColumn(found.schema);
 
     // Validoi ja filtteröi kentät
     const allowedFields = CAMPAIGN_ALLOWED_FIELDS as readonly string[];
