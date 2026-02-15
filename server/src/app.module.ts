@@ -6,6 +6,7 @@ import { AuthModule } from './auth/auth.module';
 import { CampaignsModule } from './campaigns/campaigns.module';
 import { UsersModule } from './users/users.module';
 import { CompaniesModule } from './companies/companies.module';
+import { PhotosModule } from './photos/photos.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CompaniesModule } from './companies/companies.module';
     AuthModule,
     UsersModule,
     CompaniesModule,
+    PhotosModule,
   ],
   controllers: [AppController],
   providers: [AppService],

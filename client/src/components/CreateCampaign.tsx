@@ -179,6 +179,36 @@ const CreateCampaign = () => {
   }, []);
 
   const handleSubmit = async (values: typeof form.values) => {
+    let uploadedImageUrls: string[] = [];
+
+    if (files.length > 0) {
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append("files", file);
+      });
+
+      try {
+        const uploadResponse = await axios.post(`${apiBase}/photos/upload`, formData, {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        });
+
+        uploadedImageUrls = Array.isArray(uploadResponse.data?.files)
+          ? uploadResponse.data.files
+              .map((file: { url?: string; path?: string }) => file.url || (file.path ? `${apiBase}${file.path}` : ""))
+              .filter(Boolean)
+          : [];
+      } catch (error) {
+        console.error("Error uploading images:", error);
+        return;
+      }
+    }
+
+    const combinedMediaInfo = [values.mediaInfo, ...uploadedImageUrls]
+      .filter((item) => item && String(item).trim().length > 0)
+      .join("\n");
+
     const campaignData = {
       clientId: "659e7d23473b8d69cb77c2fb",
       type: values.type,
@@ -191,7 +221,7 @@ const CreateCampaign = () => {
       customer: values.payer,
       budget: Number(values.budget) || 0,
       budgetPeriod: values.budgetPeriod,
-      mediaInfo: values.mediaInfo,
+      mediaInfo: combinedMediaInfo,
       start: values.startDate,
       end: values.endDate,
       targetArea: values.targetArea,

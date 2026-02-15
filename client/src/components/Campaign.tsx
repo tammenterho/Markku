@@ -8,12 +8,14 @@ import {
   NumberInput,
   Text,
   Select,
+  SimpleGrid,
+  Image,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { DateTimePicker } from "@mantine/dates";
 import "@mantine/dates/styles.css";
 import "dayjs/locale/fi";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { Title } from "@mantine/core";
 import axios from "axios";
 import { USER_ID_HEADER, API_BASE_URL } from "../utils/constants";
@@ -64,7 +66,37 @@ interface CampaignProps {
 
 const apiBase = API_BASE_URL;
 
+const toAbsoluteUrl = (value: string): string => {
+  if (value.startsWith("http://") || value.startsWith("https://")) {
+    return value;
+  }
+  if (value.startsWith("/")) {
+    return `${apiBase}${value}`;
+  }
+  return `${apiBase}/${value}`;
+};
+
+const getImageUrls = (mediaInfo: string): string[] => {
+  if (!mediaInfo) return [];
+
+  return mediaInfo
+    .split(/\r?\n|,/)
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0)
+    .filter(
+      (line) =>
+        line.startsWith("http://") ||
+        line.startsWith("https://") ||
+        line.startsWith("/uploads/") ||
+        /\.(jpg|jpeg|png|webp|gif|bmp|svg)(\?.*)?$/i.test(line),
+    )
+    .map(toAbsoluteUrl);
+};
+
 const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
+  const imageUrls = campaign ? getImageUrls(campaign.mediaInfo) : [];
+  const lastInitializedCampaignKey = useRef<string>("");
+
   const form = useForm({
     initialValues: {
       company: "",
@@ -87,7 +119,12 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
   });
 
   useEffect(() => {
-    if (campaign) {
+    if (campaign && opened) {
+      const initializeKey = `${campaign.id}-${campaign.updatedAt}-${opened}`;
+      if (lastInitializedCampaignKey.current === initializeKey) {
+        return;
+      }
+
       const parseRangeToDisplay = (r: string) => {
         const nums = r.match(/\d+/g);
         return nums && nums.length >= 2 ? `${nums[0]}-${nums[1]}` : r;
@@ -114,8 +151,10 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
         start: parseLocalDate(campaign.start),
         end: parseLocalDate(campaign.end),
       });
+
+      lastInitializedCampaignKey.current = initializeKey;
     }
-  }, [campaign, opened]);
+  }, [campaign, opened, form]);
 
   const handleUpdate = async (values: typeof form.values) => {
     if (!campaign) return;
@@ -209,6 +248,13 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
               label="Mediatiedot"
               {...form.getInputProps("mediaInfo")}
             />
+            {imageUrls.length > 0 && (
+              <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
+                {imageUrls.map((imageUrl) => (
+                  <Image key={imageUrl} src={imageUrl} radius="md" />
+                ))}
+              </SimpleGrid>
+            )}
             <TextInput label="url" {...form.getInputProps("url")} />
             <Select
               label="Toimintakutsu"
