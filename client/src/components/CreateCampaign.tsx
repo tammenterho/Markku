@@ -27,7 +27,7 @@ import "@mantine/dates/styles.css";
 import "dayjs/locale/fi";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL } from "../utils/constants";
 import { getUserId } from "../utils/auth";
 import { parseLocalDate } from "../utils/common";
@@ -43,6 +43,8 @@ import {
 
 const apiBase = API_BASE_URL;
 
+type PreviewFile = File & { preview: string; id: string };
+
 const CreateCampaign = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,7 +55,8 @@ const CreateCampaign = () => {
       )
     : [];
 
-  const [files, setFiles] = useState<(File & { preview: string })[]>([]);
+  const [files, setFiles] = useState<PreviewFile[]>([]);
+  const filesRef = useRef<PreviewFile[]>([]);
   const [userCompanies, setUserCompanies] = useState<
     { id: string; name: string }[]
   >([]);
@@ -62,26 +65,28 @@ const CreateCampaign = () => {
   const [newCompanyName, setNewCompanyName] = useState("");
   const [companyCreated, setCompanyCreated] = useState(false);
 
-  const removeFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+  const removeFile = (id: string) => {
+    setFiles((prev) => {
+      const fileToRemove = prev.find((file) => file.id === id);
+      if (fileToRemove) {
+        URL.revokeObjectURL(fileToRemove.preview);
+      }
+      return prev.filter((file) => file.id !== id);
+    });
   };
 
-  const previews = files.map((file, index) => {
+  const previews = files.map((file) => {
     const imageUrl = file.preview;
     return (
-      <div key={index} style={{ position: "relative" }}>
-        <Image
-          src={imageUrl}
-          onLoad={() => URL.revokeObjectURL(imageUrl)}
-          radius="md"
-        />
+      <div key={file.id} style={{ position: "relative" }}>
+        <Image src={imageUrl} radius="md" />
         <ActionIcon
           variant="filled"
           color="red"
           size="sm"
           radius="xl"
           style={{ position: "absolute", top: 5, right: 5 }}
-          onClick={() => removeFile(index)}
+          onClick={() => removeFile(file.id)}
         >
           <IconX size="70%" />
         </ActionIcon>
@@ -181,6 +186,18 @@ const CreateCampaign = () => {
 
   useEffect(() => {
     fetchUserCompanies();
+  }, []);
+
+  useEffect(() => {
+    filesRef.current = files;
+  }, [files]);
+
+  useEffect(() => {
+    return () => {
+      filesRef.current.forEach((file) => {
+        URL.revokeObjectURL(file.preview);
+      });
+    };
   }, []);
 
   const handleSubmit = async (values: typeof form.values) => {
@@ -497,6 +514,11 @@ const CreateCampaign = () => {
                       ...acceptedFiles.map((file) =>
                         Object.assign(file, {
                           preview: URL.createObjectURL(file),
+                          id:
+                            typeof crypto !== "undefined" &&
+                            typeof crypto.randomUUID === "function"
+                              ? crypto.randomUUID()
+                              : `${file.name}-${file.lastModified}-${Math.random()}`,
                         }),
                       ),
                     ]);
