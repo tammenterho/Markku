@@ -13,6 +13,7 @@ export const CAMPAIGN_ALLOWED_FIELDS = [
   'budget',
   'budgetPeriod',
   'mediaInfo',
+  'imageUrls',
   'start',
   'end',
   'targetArea',

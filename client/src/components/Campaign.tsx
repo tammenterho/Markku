@@ -41,6 +41,7 @@ export interface Campaign {
   title: string;
   copyText: string;
   mediaInfo: string;
+  imageUrls?: string[];
   url: string;
   cta: string;
   targetAge: string;
@@ -94,7 +95,12 @@ const getImageUrls = (mediaInfo: string): string[] => {
 };
 
 const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
-  const imageUrls = campaign ? getImageUrls(campaign.mediaInfo) : [];
+  const imageUrls = campaign
+    ? (Array.isArray(campaign.imageUrls) && campaign.imageUrls.length > 0
+        ? campaign.imageUrls
+        : getImageUrls(campaign.mediaInfo)
+      ).map(toAbsoluteUrl)
+    : [];
   const lastInitializedCampaignKey = useRef<string>("");
 
   const form = useForm({

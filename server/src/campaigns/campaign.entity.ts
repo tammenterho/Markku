@@ -53,6 +53,9 @@ export class Campaign {
   @Column({ type: 'varchar', length: 255 })
   mediaInfo: string;
 
+  @Column({ type: 'text', array: true, nullable: true, default: () => "'{}'" })
+  imageUrls: string[];
+
   @Column({ type: 'timestamp', nullable: true })
   start: Date;
 

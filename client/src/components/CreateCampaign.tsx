@@ -196,7 +196,9 @@ const CreateCampaign = () => {
 
         uploadedImageUrls = Array.isArray(uploadResponse.data?.files)
           ? uploadResponse.data.files
-              .map((file: { url?: string; path?: string }) => file.url || (file.path ? `${apiBase}${file.path}` : ""))
+              .map((file: { url?: string; path?: string }) =>
+                file.path ? `${apiBase}${file.path}` : file.url || "",
+              )
               .filter(Boolean)
           : [];
       } catch (error) {
@@ -204,10 +206,6 @@ const CreateCampaign = () => {
         return;
       }
     }
-
-    const combinedMediaInfo = [values.mediaInfo, ...uploadedImageUrls]
-      .filter((item) => item && String(item).trim().length > 0)
-      .join("\n");
 
     const campaignData = {
       clientId: "659e7d23473b8d69cb77c2fb",
@@ -221,7 +219,8 @@ const CreateCampaign = () => {
       customer: values.payer,
       budget: Number(values.budget) || 0,
       budgetPeriod: values.budgetPeriod,
-      mediaInfo: combinedMediaInfo,
+      mediaInfo: values.mediaInfo,
+      imageUrls: uploadedImageUrls,
       start: values.startDate,
       end: values.endDate,
       targetArea: values.targetArea,
