@@ -202,11 +202,20 @@ const CreateCampaign = () => {
         if (Array.isArray(uploadResponse.data?.files)) {
           uploadedImageUrls = uploadResponse.data.files
             .map((file: { url?: string; path?: string }) =>
-              file.path ? `${apiBase}${file.path}` : file.url || "",
+              file.path
+                ? file.path.startsWith(`${apiBase}/`) || file.path.startsWith("/api/")
+                  ? file.path
+                  : `${apiBase}${file.path}`
+                : file.url || "",
             )
             .filter(Boolean);
         } else if (typeof uploadResponse.data?.path === "string") {
-          uploadedImageUrls = [`${apiBase}${uploadResponse.data.path}`];
+          uploadedImageUrls = [
+            uploadResponse.data.path.startsWith(`${apiBase}/`) ||
+            uploadResponse.data.path.startsWith("/api/")
+              ? uploadResponse.data.path
+              : `${apiBase}${uploadResponse.data.path}`,
+          ];
         } else if (typeof uploadResponse.data?.filename === "string") {
           uploadedImageUrls = [
             `${apiBase}/uploads/${uploadResponse.data.filename}`,

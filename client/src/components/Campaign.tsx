@@ -68,13 +68,37 @@ interface CampaignProps {
 const apiBase = API_BASE_URL;
 
 const toAbsoluteUrl = (value: string): string => {
-  if (value.startsWith("http://") || value.startsWith("https://")) {
-    return value;
+  const normalizedValue = value.trim();
+
+  if (!normalizedValue) {
+    return normalizedValue;
   }
-  if (value.startsWith("/")) {
-    return `${apiBase}${value}`;
+
+  if (normalizedValue.startsWith("//")) {
+    return `https:${normalizedValue}`;
   }
-  return `${apiBase}/${value}`;
+
+  if (
+    apiBase.startsWith("/") &&
+    normalizedValue.startsWith(`${apiBase}/`)
+  ) {
+    return normalizedValue;
+  }
+
+  if (normalizedValue.startsWith("/api/")) {
+    return normalizedValue;
+  }
+
+  if (
+    normalizedValue.startsWith("http://") ||
+    normalizedValue.startsWith("https://")
+  ) {
+    return normalizedValue;
+  }
+  if (normalizedValue.startsWith("/")) {
+    return `${apiBase}${normalizedValue}`;
+  }
+  return `${apiBase}/${normalizedValue}`;
 };
 
 const getImageUrls = (mediaInfo: string): string[] => {
