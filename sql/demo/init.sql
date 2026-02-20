@@ -34,31 +34,13 @@ END $$;
 
 INSERT INTO "companies" ("linkId", "name", "createdAt", "updatedAt")
 VALUES
-  ('849d9aa3-379c-4cf1-b7bc-206fcc849763', 'M&M Kuntotalo', now(), now()),
-  ('be6972a7-02ea-4699-bf48-4d974309dc6b', 'Keski-Suomen Kuntatalo', now(), now()),
+  ('849d9aa3-379c-4cf1-b7bc-206fcc849763', 'Suomen Demo Yritys', now(), now()),
+  ('be6972a7-02ea-4699-bf48-4d974309dc6b', 'Demo Company', now(), now()),
   ('9c37d8f1-6d0f-4f1d-bc5f-16b7f5be71c0', 'Demo Media Oy', now(), now())
 ON CONFLICT ("name") DO UPDATE SET "updatedAt" = EXCLUDED."updatedAt";
 
 INSERT INTO "users" ("id", "username", "passwordHash", "companies", "isActive", "createdAt", "updatedAt")
 VALUES
-  (
-    'c03ed30b-2b58-48fe-83dc-ae3a6956dba5',
-    'leevi',
-    '$2b$12$6ZbsNcrEpiU02ukkNB.geehjgpjfa6j9/cWjjT6dsLDo9cUSn9k52',
-    '{849d9aa3-379c-4cf1-b7bc-206fcc849763,be6972a7-02ea-4699-bf48-4d974309dc6b,9c37d8f1-6d0f-4f1d-bc5f-16b7f5be71c0}',
-    true,
-    now(),
-    now()
-  ),
-  (
-    'be6972a7-02ea-4699-bf48-4d974309dc6b',
-    'mikko',
-    '$2b$12$vm7naPfpNR2yL8HZmMbUUOcXGunq3q0cZXeVpLlg1qjqUujDRZ5D.',
-    '{be6972a7-02ea-4699-bf48-4d974309dc6b,9c37d8f1-6d0f-4f1d-bc5f-16b7f5be71c0}',
-    true,
-    now(),
-    now()
-  ),
   (
     'af02aa88-5cf8-44fb-8fd7-d37bd8e0f839',
     'demo',
