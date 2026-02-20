@@ -29,6 +29,24 @@ require_cmd() {
 	fi
 }
 
+ensure_pm2() {
+	if command -v pm2 >/dev/null 2>&1; then
+		return
+	fi
+
+	log "pm2 not found. Installing globally via npm..."
+	if command -v sudo >/dev/null 2>&1; then
+		sudo npm install -g pm2
+	else
+		npm install -g pm2
+	fi
+
+	if ! command -v pm2 >/dev/null 2>&1; then
+		echo "Failed to install pm2" >&2
+		exit 1
+	fi
+}
+
 start_pm2_process() {
 	local process_name="$1"
 	local entry_file=""
@@ -181,9 +199,9 @@ log "Deployment started..."
 
 require_cmd git
 require_cmd npm
-require_cmd pm2
 require_cmd tar
 require_cmd sudo
+ensure_pm2
 
 # Make sure NVM is available
 export NVM_DIR="$HOME/.nvm"
