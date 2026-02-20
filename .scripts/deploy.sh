@@ -34,6 +34,17 @@ ensure_pm2() {
 		return
 	fi
 
+	for pm2_candidate in "$NVM_DIR"/versions/node/*/bin/pm2; do
+		if [[ -x "$pm2_candidate" ]]; then
+			export PATH="$(dirname "$pm2_candidate"):$PATH"
+			break
+		fi
+	done
+
+	if command -v pm2 >/dev/null 2>&1; then
+		return
+	fi
+
 	log "pm2 not found. Installing globally via npm..."
 	if command -v sudo >/dev/null 2>&1; then
 		sudo npm install -g pm2
@@ -197,15 +208,14 @@ trap rollback ERR
 
 log "Deployment started..."
 
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
 require_cmd git
 require_cmd npm
 require_cmd tar
 require_cmd sudo
 ensure_pm2
-
-# Make sure NVM is available
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
