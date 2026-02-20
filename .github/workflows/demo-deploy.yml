@@ -14,8 +14,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Install pm2
-        run: npm install -g pm2
       - uses: actions/checkout@v3
       - name: Deploy to Server
         uses: appleboy/ssh-action@master
