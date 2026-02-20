@@ -35,6 +35,12 @@ Markku is a full-stack campaign and marketing scheduling application with a Reac
 
 - **GitHub Actions** for deployment workflow (`deploy.yml`)
 
+## Deployment
+
+- Production workflow: `.github/workflows/deploy.yml` runs `.scripts/deploy.sh`
+- Demo workflow: `.github/workflows/demoDeploy.yml` runs `.scripts/deploy-demo.sh`
+- Demo workflow supports dedicated secrets (`HOST_DEMO`, `USERNAME_DEMO`, `PORT_DEMO`, `SSHKEY_DEMO`) and falls back to production secrets if demo-specific secrets are not set.
+
 
 ## Local Development
 

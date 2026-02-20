@@ -1,0 +1,25 @@
+name: Demo Deploy
+
+# Trigger the workflow on push and
+# pull request events on the demo branch
+on:
+  push:
+    branches: ["demo"]
+  pull_request:
+    branches: ["demo"]
+
+# Authenticate to the the server via ssh
+# and run our deployment script
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Deploy to Server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DEMO_HOST || secrets.HOST }}
+          username: ${{ secrets.DEMO_USERNAME || secrets.USERNAME }}
+          port: ${{ secrets.DEMO_PORT || secrets.PORT }}
+          key: ${{ secrets.DEMO_SSHKEY || secrets.SSHKEY }}
+          script: "cd projects/markku && bash ./.scripts/deploy-demo.sh"
