@@ -30,8 +30,20 @@ require_cmd() {
 
 start_pm2_process() {
 	local process_name="$1"
+	local entry_file=""
 
-	pm2 start main.js --name "$process_name" --node-args="-r dotenv/config"
+	if [[ -f "src/main.js" ]]; then
+		entry_file="src/main.js"
+	elif [[ -f "main.js" ]]; then
+		entry_file="main.js"
+	elif [[ -f "dist/main.js" ]]; then
+		entry_file="dist/main.js"
+	else
+		echo "Unable to find server entry file (tried src/main.js, main.js, dist/main.js)" >&2
+		exit 1
+	fi
+
+	pm2 start "$entry_file" --name "$process_name" --node-args="-r dotenv/config"
 }
 
 resolve_path() {
