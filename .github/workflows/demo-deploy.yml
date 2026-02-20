@@ -22,4 +22,4 @@ jobs:
           username: ${{ secrets.DEMO_USERNAME || secrets.USERNAME }}
           port: ${{ secrets.DEMO_PORT || secrets.PORT }}
           key: ${{ secrets.DEMO_SSHKEY || secrets.SSHKEY }}
-          script: "cd projects/markku && bash ./.scripts/deploy-demo.sh"
+          script: "cd projects/markku && bash ./.scripts/demo-deploy.sh"
