@@ -47,7 +47,7 @@ VALUES
   (
     'af02aa88-5cf8-44fb-8fd7-d37bd8e0f839',
     'demo',
-    '$2b$12$6ZbsNcrEpiU02ukkNB.geehjgpjfa6j9/cWjjT6dsLDo9cUSn9k52',
+    '$2b$12$3OuzzNqT17l1A3y92Hbtr.cJ/WZcsLLLlcb3PaEMbPJX2TEvKE98u',
     '{849d9aa3-379c-4cf1-b7bc-206fcc849763,9c37d8f1-6d0f-4f1d-bc5f-16b7f5be71c0}',
     true,
     now(),
@@ -55,6 +55,7 @@ VALUES
   )
 ON CONFLICT ("username") DO UPDATE
 SET
+  "passwordHash" = EXCLUDED."passwordHash",
   "companies" = EXCLUDED."companies",
   "isActive" = EXCLUDED."isActive",
   "updatedAt" = EXCLUDED."updatedAt";
