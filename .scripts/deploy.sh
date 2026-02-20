@@ -1,11 +1,18 @@
 #!/bin/bash
 set -Eeuo pipefail
 
-APP_NAME="markku-api"
-BASE_DIR="/var/www/markku"
+APP_NAME="${APP_NAME:-markku-api}"
+BASE_DIR="${BASE_DIR:-/var/www/markku}"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
+GIT_REMOTE="${GIT_REMOTE:-origin}"
 RELEASES_DIR="$BASE_DIR/releases"
 ARCHIVES_DIR="$BASE_DIR/archives"
+SHARED_DIR="$BASE_DIR/shared"
+SHARED_ENV_FILE="$SHARED_DIR/.env"
+SHARED_UPLOADS_DIR="$SHARED_DIR/uploads"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
+RELEASES_TO_KEEP="${RELEASES_TO_KEEP:-5}"
+ARCHIVES_TO_KEEP="${ARCHIVES_TO_KEEP:-5}"
 ROLLBACK_REQUIRED=false
 PREV_CLIENT_TARGET=""
 PREV_SERVER_TARGET=""
@@ -35,6 +42,65 @@ archive_target() {
 		log "Archiving current $component build -> $archive_file"
 		sudo mkdir -p "$ARCHIVES_DIR/$component"
 		sudo tar -C "$archive_parent" -czf "$archive_file" "$archive_name"
+	fi
+}
+
+cleanup_release_dirs() {
+	local component="$1"
+	local keep_count="$2"
+	local component_dir="$RELEASES_DIR/$component"
+	local releases=()
+
+	mapfile -t releases < <(ls -1dt "$component_dir"/*/ 2>/dev/null || true)
+	if (( ${#releases[@]} <= keep_count )); then
+		return
+	fi
+
+	log "Cleaning old $component releases (keeping $keep_count)"
+	for ((i=keep_count; i<${#releases[@]}; i++)); do
+		sudo rm -rf "${releases[$i]%/}"
+	done
+}
+
+cleanup_archive_files() {
+	local component="$1"
+	local keep_count="$2"
+	local archive_dir="$ARCHIVES_DIR/$component"
+	local archives=()
+
+	mapfile -t archives < <(ls -1t "$archive_dir"/*.tar.gz 2>/dev/null || true)
+	if (( ${#archives[@]} <= keep_count )); then
+		return
+	fi
+
+	log "Cleaning old $component archives (keeping $keep_count)"
+	for ((i=keep_count; i<${#archives[@]}; i++)); do
+		sudo rm -f "${archives[$i]}"
+	done
+}
+
+cleanup_old_artifacts() {
+	cleanup_release_dirs "client" "$RELEASES_TO_KEEP"
+	cleanup_release_dirs "server" "$RELEASES_TO_KEEP"
+	cleanup_archive_files "client" "$ARCHIVES_TO_KEEP"
+	cleanup_archive_files "server" "$ARCHIVES_TO_KEEP"
+}
+
+prepare_shared_server_assets() {
+	local source_server_dir="$1"
+
+	sudo mkdir -p "$SHARED_UPLOADS_DIR"
+
+	if [[ ! -f "$SHARED_ENV_FILE" && -f "$source_server_dir/.env" ]]; then
+		log "Migrating server .env to shared directory"
+		sudo cp "$source_server_dir/.env" "$SHARED_ENV_FILE"
+	fi
+
+	if [[ -d "$source_server_dir/uploads" ]]; then
+		if [[ -z "$(ls -A "$SHARED_UPLOADS_DIR" 2>/dev/null || true)" ]]; then
+			log "Migrating uploads to shared directory"
+			sudo cp -R "$source_server_dir/uploads/." "$SHARED_UPLOADS_DIR/"
+		fi
 	fi
 }
 
@@ -83,12 +149,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_DIR"
 
-log "Updating repository"
-git fetch origin main
-git pull --ff-only origin main
+log "Updating repository from $GIT_REMOTE/$DEPLOY_BRANCH"
+git fetch "$GIT_REMOTE" "$DEPLOY_BRANCH"
+git checkout "$DEPLOY_BRANCH"
+git pull --ff-only "$GIT_REMOTE" "$DEPLOY_BRANCH"
 
 log "Preparing release directories"
-sudo mkdir -p "$RELEASES_DIR/client" "$RELEASES_DIR/server" "$ARCHIVES_DIR/client" "$ARCHIVES_DIR/server"
+sudo mkdir -p "$RELEASES_DIR/client" "$RELEASES_DIR/server" "$ARCHIVES_DIR/client" "$ARCHIVES_DIR/server" "$SHARED_UPLOADS_DIR"
 
 CURRENT_CLIENT_LINK="$BASE_DIR/client"
 CURRENT_SERVER_LINK="$BASE_DIR/server"
@@ -107,6 +174,10 @@ elif [[ -d "$CURRENT_SERVER_LINK" ]]; then
 	PREV_SERVER_TARGET="$RELEASES_DIR/server/legacy-${TIMESTAMP}"
 	log "Migrating legacy server directory"
 	sudo mv "$CURRENT_SERVER_LINK" "$PREV_SERVER_TARGET"
+fi
+
+if [[ -n "$PREV_SERVER_TARGET" && -d "$PREV_SERVER_TARGET" ]]; then
+	prepare_shared_server_assets "$PREV_SERVER_TARGET"
 fi
 
 archive_target "client" "$PREV_CLIENT_TARGET"
@@ -130,6 +201,13 @@ NEW_SERVER_RELEASE="$RELEASES_DIR/server/$TIMESTAMP"
 sudo mkdir -p "$NEW_SERVER_RELEASE"
 sudo cp -R dist/* package.json package-lock.json "$NEW_SERVER_RELEASE"
 
+if [[ -f "$SHARED_ENV_FILE" ]]; then
+	sudo ln -sfn "$SHARED_ENV_FILE" "$NEW_SERVER_RELEASE/.env"
+else
+	log "Warning: shared .env not found at $SHARED_ENV_FILE"
+fi
+sudo ln -sfn "$SHARED_UPLOADS_DIR" "$NEW_SERVER_RELEASE/uploads"
+
 log "Installing production server dependencies in release"
 cd "$NEW_SERVER_RELEASE"
 sudo npm ci --omit=dev
@@ -149,4 +227,5 @@ else
 fi
 
 ROLLBACK_REQUIRED=false
+cleanup_old_artifacts
 log "Deployment finished successfully."
