@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "tsc -b --noEmit && vite",
     "build": "tsc -b && vite build",
-    "build:demo": "VITE_APP_VARIANT=demo tsc -b && vite build",
+    "build:demo": "export VITE_APP_VARIANT=demo && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",

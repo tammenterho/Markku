@@ -228,6 +228,7 @@ archive_target "client" "$PREV_CLIENT_TARGET"
 archive_target "server" "$PREV_SERVER_TARGET"
 
 log "Building client"
+log "Client build script: npm run $CLIENT_BUILD_SCRIPT"
 cd "$REPO_DIR/client"
 npm ci
 npm run "$CLIENT_BUILD_SCRIPT"
