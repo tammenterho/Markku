@@ -9,6 +9,7 @@ import {
   Text,
   Center,
   Stack,
+  Alert,
 } from "@mantine/core";
 import { useForm } from "@mantine/form";
 import { IconLogin } from "@tabler/icons-react";
@@ -24,6 +25,12 @@ import {
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const demoDisclaimerLogin = IS_DEMO_APP ? (
+    <Alert color="yellow" variant="light" radius="md" mb="md">
+      Use any inputs to Sign in.
+    </Alert>
+  ) : null;
 
   const form = useForm({
     initialValues: {
@@ -91,47 +98,50 @@ const Login = () => {
   };
 
   return (
-    <Container size={420} my={40}>
-      <Center>
-        <Stack gap="md" align="center" mb="xl">
-          <IconLogin size={48} />
-          <Title order={2}>Welcome back</Title>
-          <Text c="dimmed" size="sm">
-            Sign in to your account
-          </Text>
-        </Stack>
-      </Center>
-
-      <Paper withBorder shadow="md" p={30} radius="md">
-        <form onSubmit={form.onSubmit(handleSubmit)}>
-          <Stack gap="md">
-            <TextInput
-              label="Username"
-              placeholder="Your username"
-              required
-              {...form.getInputProps("username")}
-            />
-
-            <PasswordInput
-              label="Password"
-              placeholder="Your password"
-              required
-              {...form.getInputProps("password")}
-            />
-
-            {error && (
-              <Text c="red" size="sm">
-                {error}
-              </Text>
-            )}
-
-            <Button type="submit" fullWidth loading={loading}>
-              Sign in
-            </Button>
+    <>
+      {demoDisclaimerLogin}
+      <Container size={420} my={40}>
+        <Center>
+          <Stack gap="md" align="center" mb="xl">
+            <IconLogin size={48} />
+            <Title order={2}>Welcome back</Title>
+            <Text c="dimmed" size="sm">
+              Sign in to your account
+            </Text>
           </Stack>
-        </form>
-      </Paper>
-    </Container>
+        </Center>
+
+        <Paper withBorder shadow="md" p={30} radius="md">
+          <form onSubmit={form.onSubmit(handleSubmit)}>
+            <Stack gap="md">
+              <TextInput
+                label="Username"
+                placeholder="Your username"
+                required
+                {...form.getInputProps("username")}
+              />
+
+              <PasswordInput
+                label="Password"
+                placeholder="Your password"
+                required
+                {...form.getInputProps("password")}
+              />
+
+              {error && (
+                <Text c="red" size="sm">
+                  {error}
+                </Text>
+              )}
+
+              <Button type="submit" fullWidth loading={loading}>
+                Sign in
+              </Button>
+            </Stack>
+          </form>
+        </Paper>
+      </Container>
+    </>
   );
 };
 
