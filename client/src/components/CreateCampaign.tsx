@@ -28,7 +28,7 @@ import "dayjs/locale/fi";
 import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { API_BASE_URL } from "../utils/constants";
+import { API_BASE_URL, IS_DEMO_APP } from "../utils/constants";
 import { getUserId } from "../utils/auth";
 import { parseLocalDate } from "../utils/common";
 import { genderOptions, ctaOptions } from "../utils/campaignLabels";
@@ -202,6 +202,11 @@ const CreateCampaign = () => {
 
   const handleSubmit = async (values: typeof form.values) => {
     let uploadedImageUrls: string[] = [];
+
+    if (IS_DEMO_APP && files.length > 0) {
+      alert("Kuvien lisääminen ei ole käytössä demoversiossa.");
+      return;
+    }
 
     if (files.length > 0) {
       const formData = new FormData();

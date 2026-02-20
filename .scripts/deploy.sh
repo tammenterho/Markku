@@ -13,9 +13,11 @@ SHARED_UPLOADS_DIR="$SHARED_DIR/uploads"
 TIMESTAMP="$(date +%Y%m%d-%H%M%S)"
 RELEASES_TO_KEEP="${RELEASES_TO_KEEP:-5}"
 ARCHIVES_TO_KEEP="${ARCHIVES_TO_KEEP:-5}"
+CLIENT_BUILD_SCRIPT="${CLIENT_BUILD_SCRIPT:-build}"
 ROLLBACK_REQUIRED=false
 PREV_CLIENT_TARGET=""
 PREV_SERVER_TARGET=""
+USE_SUDO=false
 
 log() {
 	echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
@@ -26,6 +28,84 @@ require_cmd() {
 		echo "Missing required command: $1" >&2
 		exit 1
 	fi
+}
+
+setup_privileged_runner() {
+	if [[ "$EUID" -eq 0 ]]; then
+		return
+	fi
+
+	if command -v sudo >/dev/null 2>&1 && sudo -n true >/dev/null 2>&1; then
+		USE_SUDO=true
+		return
+	fi
+
+	log "Passwordless sudo unavailable; running commands without sudo"
+}
+
+run_with_privilege() {
+	if [[ "$USE_SUDO" == true ]]; then
+		sudo -n "$@"
+	else
+		"$@"
+	fi
+}
+
+ensure_pm2() {
+	if command -v pm2 >/dev/null 2>&1; then
+		return
+	fi
+
+	for pm2_candidate in "$NVM_DIR"/versions/node/*/bin/pm2; do
+		if [[ -x "$pm2_candidate" ]]; then
+			export PATH="$(dirname "$pm2_candidate"):$PATH"
+			break
+		fi
+	done
+
+	if command -v pm2 >/dev/null 2>&1; then
+		return
+	fi
+
+	log "pm2 not found. Installing globally via npm..."
+	run_with_privilege npm install -g pm2
+
+	if ! command -v pm2 >/dev/null 2>&1; then
+		echo "Failed to install pm2" >&2
+		exit 1
+	fi
+}
+
+start_pm2_process() {
+	local process_name="$1"
+	local entry_file=""
+
+	if [[ -f "src/main.js" ]]; then
+		entry_file="src/main.js"
+	elif [[ -f "main.js" ]]; then
+		entry_file="main.js"
+	elif [[ -f "dist/main.js" ]]; then
+		entry_file="dist/main.js"
+	else
+		echo "Unable to find server entry file (tried src/main.js, main.js, dist/main.js)" >&2
+		exit 1
+	fi
+
+	pm2 start "$entry_file" --name "$process_name" --node-args="-r dotenv/config"
+}
+
+resolve_path() {
+	local path="$1"
+
+	if command -v readlink >/dev/null 2>&1; then
+		readlink -f "$path" 2>/dev/null && return
+	fi
+
+	if command -v realpath >/dev/null 2>&1; then
+		realpath "$path" 2>/dev/null && return
+	fi
+
+	echo "$path"
 }
 
 archive_target() {
@@ -40,8 +120,8 @@ archive_target() {
 		archive_name="$(basename "$target_path")"
 
 		log "Archiving current $component build -> $archive_file"
-		sudo mkdir -p "$ARCHIVES_DIR/$component"
-		sudo tar -C "$archive_parent" -czf "$archive_file" "$archive_name"
+		run_with_privilege mkdir -p "$ARCHIVES_DIR/$component"
+		run_with_privilege tar -C "$archive_parent" -czf "$archive_file" "$archive_name"
 	fi
 }
 
@@ -58,7 +138,7 @@ cleanup_release_dirs() {
 
 	log "Cleaning old $component releases (keeping $keep_count)"
 	for ((i=keep_count; i<${#releases[@]}; i++)); do
-		sudo rm -rf "${releases[$i]%/}"
+		run_with_privilege rm -rf "${releases[$i]%/}"
 	done
 }
 
@@ -75,7 +155,7 @@ cleanup_archive_files() {
 
 	log "Cleaning old $component archives (keeping $keep_count)"
 	for ((i=keep_count; i<${#archives[@]}; i++)); do
-		sudo rm -f "${archives[$i]}"
+		run_with_privilege rm -f "${archives[$i]}"
 	done
 }
 
@@ -88,18 +168,29 @@ cleanup_old_artifacts() {
 
 prepare_shared_server_assets() {
 	local source_server_dir="$1"
+	local source_uploads_dir="$source_server_dir/uploads"
+	local resolved_source_uploads=""
+	local resolved_shared_uploads=""
 
-	sudo mkdir -p "$SHARED_UPLOADS_DIR"
+	run_with_privilege mkdir -p "$SHARED_UPLOADS_DIR"
 
 	if [[ ! -f "$SHARED_ENV_FILE" && -f "$source_server_dir/.env" ]]; then
 		log "Migrating server .env to shared directory"
-		sudo cp "$source_server_dir/.env" "$SHARED_ENV_FILE"
+		run_with_privilege cp "$source_server_dir/.env" "$SHARED_ENV_FILE"
 	fi
 
-	if [[ -d "$source_server_dir/uploads" ]]; then
+	if [[ -d "$source_uploads_dir" ]]; then
+		resolved_source_uploads="$(resolve_path "$source_uploads_dir")"
+		resolved_shared_uploads="$(resolve_path "$SHARED_UPLOADS_DIR")"
+
+		if [[ "$resolved_source_uploads" == "$resolved_shared_uploads" ]]; then
+			log "Uploads already point to shared directory, skipping migration copy"
+			return
+		fi
+
 		if [[ -z "$(ls -A "$SHARED_UPLOADS_DIR" 2>/dev/null || true)" ]]; then
 			log "Migrating uploads to shared directory"
-			sudo cp -R "$source_server_dir/uploads/." "$SHARED_UPLOADS_DIR/"
+			run_with_privilege cp -R "$source_uploads_dir/." "$SHARED_UPLOADS_DIR/"
 		fi
 	fi
 }
@@ -113,18 +204,18 @@ rollback() {
 
 	if [[ -n "$PREV_CLIENT_TARGET" && -d "$PREV_CLIENT_TARGET" ]]; then
 		log "Reverting client symlink"
-		sudo ln -sfn "$PREV_CLIENT_TARGET" "$BASE_DIR/client"
+		run_with_privilege ln -sfn "$PREV_CLIENT_TARGET" "$BASE_DIR/client"
 	fi
 
 	if [[ -n "$PREV_SERVER_TARGET" && -d "$PREV_SERVER_TARGET" ]]; then
 		log "Reverting server symlink"
-		sudo ln -sfn "$PREV_SERVER_TARGET" "$BASE_DIR/server"
+		run_with_privilege ln -sfn "$PREV_SERVER_TARGET" "$BASE_DIR/server"
 
 		if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
 			pm2 reload "$APP_NAME" --update-env || pm2 restart "$APP_NAME"
 		else
 			cd "$BASE_DIR/server"
-			npm run start:prod
+			start_pm2_process "$APP_NAME"
 		fi
 	fi
 
@@ -135,15 +226,14 @@ trap rollback ERR
 
 log "Deployment started..."
 
-require_cmd git
-require_cmd npm
-require_cmd pm2
-require_cmd tar
-require_cmd sudo
-
-# Make sure NVM is available
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+
+require_cmd git
+require_cmd npm
+require_cmd tar
+setup_privileged_runner
+ensure_pm2
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
@@ -155,7 +245,7 @@ git checkout "$DEPLOY_BRANCH"
 git pull --ff-only "$GIT_REMOTE" "$DEPLOY_BRANCH"
 
 log "Preparing release directories"
-sudo mkdir -p "$RELEASES_DIR/client" "$RELEASES_DIR/server" "$ARCHIVES_DIR/client" "$ARCHIVES_DIR/server" "$SHARED_UPLOADS_DIR"
+run_with_privilege mkdir -p "$RELEASES_DIR/client" "$RELEASES_DIR/server" "$ARCHIVES_DIR/client" "$ARCHIVES_DIR/server" "$SHARED_UPLOADS_DIR"
 
 CURRENT_CLIENT_LINK="$BASE_DIR/client"
 CURRENT_SERVER_LINK="$BASE_DIR/server"
@@ -165,7 +255,7 @@ if [[ -L "$CURRENT_CLIENT_LINK" ]]; then
 elif [[ -d "$CURRENT_CLIENT_LINK" ]]; then
 	PREV_CLIENT_TARGET="$RELEASES_DIR/client/legacy-${TIMESTAMP}"
 	log "Migrating legacy client directory"
-	sudo mv "$CURRENT_CLIENT_LINK" "$PREV_CLIENT_TARGET"
+	run_with_privilege mv "$CURRENT_CLIENT_LINK" "$PREV_CLIENT_TARGET"
 fi
 
 if [[ -L "$CURRENT_SERVER_LINK" ]]; then
@@ -173,7 +263,7 @@ if [[ -L "$CURRENT_SERVER_LINK" ]]; then
 elif [[ -d "$CURRENT_SERVER_LINK" ]]; then
 	PREV_SERVER_TARGET="$RELEASES_DIR/server/legacy-${TIMESTAMP}"
 	log "Migrating legacy server directory"
-	sudo mv "$CURRENT_SERVER_LINK" "$PREV_SERVER_TARGET"
+	run_with_privilege mv "$CURRENT_SERVER_LINK" "$PREV_SERVER_TARGET"
 fi
 
 if [[ -n "$PREV_SERVER_TARGET" && -d "$PREV_SERVER_TARGET" ]]; then
@@ -184,13 +274,14 @@ archive_target "client" "$PREV_CLIENT_TARGET"
 archive_target "server" "$PREV_SERVER_TARGET"
 
 log "Building client"
+log "Client build script: npm run $CLIENT_BUILD_SCRIPT"
 cd "$REPO_DIR/client"
 npm ci
-npm run build
+npm run "$CLIENT_BUILD_SCRIPT"
 
 NEW_CLIENT_RELEASE="$RELEASES_DIR/client/$TIMESTAMP"
-sudo mkdir -p "$NEW_CLIENT_RELEASE"
-sudo cp -R dist "$NEW_CLIENT_RELEASE/dist"
+run_with_privilege mkdir -p "$NEW_CLIENT_RELEASE"
+run_with_privilege cp -R dist "$NEW_CLIENT_RELEASE/dist"
 
 log "Building server"
 cd "$REPO_DIR/server"
@@ -198,32 +289,32 @@ npm ci
 npm run build
 
 NEW_SERVER_RELEASE="$RELEASES_DIR/server/$TIMESTAMP"
-sudo mkdir -p "$NEW_SERVER_RELEASE"
-sudo cp -R dist/* package.json package-lock.json "$NEW_SERVER_RELEASE"
+run_with_privilege mkdir -p "$NEW_SERVER_RELEASE"
+run_with_privilege cp -R dist/* package.json package-lock.json "$NEW_SERVER_RELEASE"
 
 if [[ -f "$SHARED_ENV_FILE" ]]; then
-	sudo ln -sfn "$SHARED_ENV_FILE" "$NEW_SERVER_RELEASE/.env"
+	run_with_privilege ln -sfn "$SHARED_ENV_FILE" "$NEW_SERVER_RELEASE/.env"
 else
 	log "Warning: shared .env not found at $SHARED_ENV_FILE"
 fi
-sudo ln -sfn "$SHARED_UPLOADS_DIR" "$NEW_SERVER_RELEASE/uploads"
+run_with_privilege ln -sfn "$SHARED_UPLOADS_DIR" "$NEW_SERVER_RELEASE/uploads"
 
 log "Installing production server dependencies in release"
 cd "$NEW_SERVER_RELEASE"
-sudo npm ci --omit=dev
+run_with_privilege npm ci --omit=dev
 
 ROLLBACK_REQUIRED=true
 
 log "Switching current symlinks to new releases"
-sudo ln -sfn "$NEW_CLIENT_RELEASE" "$CURRENT_CLIENT_LINK"
-sudo ln -sfn "$NEW_SERVER_RELEASE" "$CURRENT_SERVER_LINK"
+run_with_privilege ln -sfn "$NEW_CLIENT_RELEASE" "$CURRENT_CLIENT_LINK"
+run_with_privilege ln -sfn "$NEW_SERVER_RELEASE" "$CURRENT_SERVER_LINK"
 
 log "Reloading PM2 process with minimal downtime"
 cd "$CURRENT_SERVER_LINK"
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
 	pm2 reload "$APP_NAME" --update-env
 else
-	npm run start:prod
+	start_pm2_process "$APP_NAME"
 fi
 
 ROLLBACK_REQUIRED=false

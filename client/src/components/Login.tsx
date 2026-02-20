@@ -13,7 +13,7 @@ import {
 import { useForm } from "@mantine/form";
 import { IconLogin } from "@tabler/icons-react";
 import axios from "axios";
-import { API_BASE_URL } from "../utils/constants";
+import { API_BASE_URL, IS_DEMO_APP } from "../utils/constants";
 import {
   markActivity,
   setAccessToken,
@@ -40,6 +40,9 @@ const Login = () => {
     username: string;
     password: string;
   }) => {
+    const username = IS_DEMO_APP ? "demo" : values.username;
+    const password = IS_DEMO_APP ? "demo" : values.password;
+
     setLoading(true);
     setError(null);
 
@@ -47,8 +50,8 @@ const Login = () => {
       const response = await axios.post(
         `${API_BASE_URL}/auth/signin`,
         {
-          username: values.username,
-          password: values.password,
+          username: IS_DEMO_APP ? "demo" : username,
+          password: IS_DEMO_APP ? "demo" : password,
         },
         { withCredentials: true },
       );
