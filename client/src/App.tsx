@@ -1,9 +1,10 @@
-import { AppShell, Center, Loader } from "@mantine/core";
+import { Alert, AppShell, Center, Container, Loader } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useEffect, useState } from "react";
 import Header from "./components/Header";
 import Navbar from "./components/Navbar";
 import RouterSwitcher from "./components/RouterSwitcher";
+import { IS_DEMO_APP } from "./utils/constants";
 import {
   getAccessToken,
   isAuthenticated,
@@ -17,6 +18,12 @@ import {
 function App() {
   const [opened, { toggle, close }] = useDisclosure();
   const [authReady, setAuthReady] = useState(false);
+
+  const demoDisclaimer = IS_DEMO_APP ? (
+    <Alert color="yellow" variant="light" radius="md" mb="md">
+      Demo version in use. Data may be reset without notice.
+    </Alert>
+  ) : null;
 
   useEffect(() => {
     let mounted = true;
@@ -97,7 +104,12 @@ function App() {
   }
 
   if (!isAuthenticated()) {
-    return <RouterSwitcher />;
+    return (
+      <Container size="lg" py="md">
+        {demoDisclaimer}
+        <RouterSwitcher />
+      </Container>
+    );
   }
 
   return (
@@ -113,6 +125,7 @@ function App() {
       <Header toggle={toggle} opened={opened} />
       <Navbar close={close} />
       <AppShell.Main>
+        {demoDisclaimer}
         <RouterSwitcher />
       </AppShell.Main>
     </AppShell>
