@@ -28,6 +28,20 @@ require_cmd() {
 	fi
 }
 
+resolve_path() {
+	local path="$1"
+
+	if command -v readlink >/dev/null 2>&1; then
+		readlink -f "$path" 2>/dev/null && return
+	fi
+
+	if command -v realpath >/dev/null 2>&1; then
+		realpath "$path" 2>/dev/null && return
+	fi
+
+	echo "$path"
+}
+
 archive_target() {
 	local component="$1"
 	local target_path="$2"
@@ -88,6 +102,9 @@ cleanup_old_artifacts() {
 
 prepare_shared_server_assets() {
 	local source_server_dir="$1"
+	local source_uploads_dir="$source_server_dir/uploads"
+	local resolved_source_uploads=""
+	local resolved_shared_uploads=""
 
 	sudo mkdir -p "$SHARED_UPLOADS_DIR"
 
@@ -96,10 +113,18 @@ prepare_shared_server_assets() {
 		sudo cp "$source_server_dir/.env" "$SHARED_ENV_FILE"
 	fi
 
-	if [[ -d "$source_server_dir/uploads" ]]; then
+	if [[ -d "$source_uploads_dir" ]]; then
+		resolved_source_uploads="$(resolve_path "$source_uploads_dir")"
+		resolved_shared_uploads="$(resolve_path "$SHARED_UPLOADS_DIR")"
+
+		if [[ "$resolved_source_uploads" == "$resolved_shared_uploads" ]]; then
+			log "Uploads already point to shared directory, skipping migration copy"
+			return
+		fi
+
 		if [[ -z "$(ls -A "$SHARED_UPLOADS_DIR" 2>/dev/null || true)" ]]; then
 			log "Migrating uploads to shared directory"
-			sudo cp -R "$source_server_dir/uploads/." "$SHARED_UPLOADS_DIR/"
+			sudo cp -R "$source_uploads_dir/." "$SHARED_UPLOADS_DIR/"
 		fi
 	fi
 }
