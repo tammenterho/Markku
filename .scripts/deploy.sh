@@ -28,6 +28,12 @@ require_cmd() {
 	fi
 }
 
+start_pm2_process() {
+	local process_name="$1"
+
+	pm2 start main.js --name "$process_name" --node-args="-r dotenv/config"
+}
+
 resolve_path() {
 	local path="$1"
 
@@ -149,7 +155,7 @@ rollback() {
 			pm2 reload "$APP_NAME" --update-env || pm2 restart "$APP_NAME"
 		else
 			cd "$BASE_DIR/server"
-			npm run start:prod
+			start_pm2_process "$APP_NAME"
 		fi
 	fi
 
@@ -248,7 +254,7 @@ cd "$CURRENT_SERVER_LINK"
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
 	pm2 reload "$APP_NAME" --update-env
 else
-	npm run start:prod
+	start_pm2_process "$APP_NAME"
 fi
 
 ROLLBACK_REQUIRED=false
