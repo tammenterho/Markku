@@ -7,5 +7,6 @@ export APP_NAME="markku-api-demo"
 export BASE_DIR="/var/www/demo-markku"
 export DEPLOY_BRANCH="demo"
 export GIT_REMOTE="origin"
+export CLIENT_BUILD_SCRIPT="build:demo"
 
 bash "$SCRIPT_DIR/deploy.sh"
