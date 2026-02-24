@@ -8,6 +8,9 @@ import { TENANT_PREFIX, CAMPAIGN_ALLOWED_FIELDS } from '../common/constants';
 export class CampaignsService {
   private readonly logger = new Logger(CampaignsService.name);
 
+  private static readonly UUID_REGEX =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
   constructor(
     @InjectRepository(Campaign)
     private readonly campaignRepository: Repository<Campaign>,
@@ -17,6 +20,11 @@ export class CampaignsService {
   private async getCompanyByLinkId(
     linkId: string,
   ): Promise<{ id: number } | null> {
+    if (!CampaignsService.UUID_REGEX.test(linkId)) {
+      this.logger.warn(`Invalid company linkId format: ${linkId}`);
+      return null;
+    }
+
     const result = await this.dataSource.query(
       'SELECT id FROM companies WHERE "linkId" = $1',
       [linkId],
