@@ -45,7 +45,6 @@ export class CompaniesService {
       // Luo campaigns-taulu skeemaan
       await queryRunner.query(`CREATE TABLE IF NOT EXISTS "${schemaName}".campaigns (
         "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-        "clientId" varchar(255) NOT NULL,
         "type" varchar(50),
         "companyId" varchar(255) NOT NULL,
         "company" varchar(255) NOT NULL,

@@ -32,7 +32,6 @@ import {
 
 export interface Campaign {
   id: string;
-  clientId: string;
   companyId: string;
   company: string;
   customer: string;
@@ -78,10 +77,7 @@ const toAbsoluteUrl = (value: string): string => {
     return `https:${normalizedValue}`;
   }
 
-  if (
-    apiBase.startsWith("/") &&
-    normalizedValue.startsWith(`${apiBase}/`)
-  ) {
+  if (apiBase.startsWith("/") && normalizedValue.startsWith(`${apiBase}/`)) {
     return normalizedValue;
   }
 

@@ -7,7 +7,6 @@ CREATE SCHEMA IF NOT EXISTS tenant_1;
 
 CREATE TABLE IF NOT EXISTS tenant_1.campaigns (
   "id" uuid NOT NULL DEFAULT gen_random_uuid(),
-  "clientId" varchar(255) NOT NULL,
   "companyId" varchar(255) NOT NULL,
   "company" varchar(255) NOT NULL,
   "customer" varchar(255) NOT NULL,
@@ -41,9 +40,9 @@ END $$;
 
 
 INSERT INTO tenant_1.campaigns (
-  "id", "clientId", "companyId", "company", "customer", "name", "payer", "title", "copyText", "targetAge", "targetGender", "targetArea", "budget", "budgetPeriod", "mediaInfo", "start", "end", "status", "type", "url", "cta", "createdBy"
+  "id", "companyId", "company", "customer", "name", "payer", "title", "copyText", "targetAge", "targetGender", "targetArea", "budget", "budgetPeriod", "mediaInfo", "start", "end", "status", "type", "url", "cta", "createdBy"
 ) VALUES 
-  ('659e7d23-473b-8d69-cb77-c2fb00000000', '659e7d23473b8d69cb77c2fb', '849d9aa3-379c-4cf1-b7bc-206fcc849763', 'M&M Kuntotalo', 'Ville Vallaton', 'Joulukamppis','M&M Kuntotalo', 'Sama kuin ennen joulua', 'Tervetuloa, isot alet!!!', 'Age undefined, undefined', 'Male', 'Area undefined, undefined', 300, 'DURATION', 'kuva jossa kukkia', '2024-01-11 08:00:00', '2024-01-26 16:00:00', false, 'AD', 'www.wrsartfs.com', 'Lue lisää', 'Jussi Heinonen');
+  ('659e7d23-473b-8d69-cb77-c2fb00000000', '849d9aa3-379c-4cf1-b7bc-206fcc849763', 'M&M Kuntotalo', 'Ville Vallaton', 'Joulukamppis','M&M Kuntotalo', 'Sama kuin ennen joulua', 'Tervetuloa, isot alet!!!', 'Age undefined, undefined', 'Male', 'Area undefined, undefined', 300, 'DURATION', 'kuva jossa kukkia', '2024-01-11 08:00:00', '2024-01-26 16:00:00', false, 'AD', 'www.wrsartfs.com', 'Lue lisää', 'Jussi Heinonen');
 
 DO $$
 BEGIN

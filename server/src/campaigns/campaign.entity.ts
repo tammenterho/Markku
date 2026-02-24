@@ -12,9 +12,6 @@ export class Campaign {
   id: string; // automaattisesti generoitu UUID
 
   @Column({ type: 'varchar', length: 255 })
-  clientId: string;
-
-  @Column({ type: 'varchar', length: 255 })
   companyId: string;
 
   @Column({ type: 'varchar', length: 255 })
