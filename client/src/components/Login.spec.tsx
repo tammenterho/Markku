@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { render, screen, waitFor } from "../utils/test-utils";
+import { render } from "../utils/test-utils";
 import userEvent from "@testing-library/user-event";
 import Login from "./Login";
 import * as authUtils from "../utils/auth";
@@ -34,11 +34,11 @@ describe("Login Component", () => {
   it("should render login form", () => {
     render(<Login />);
 
-    expect(screen.getByText("Welcome back")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Your username")).toBeInTheDocument();
-    expect(screen.getByPlaceholderText("Your password")).toBeInTheDocument();
+    expect(screenn.getByText("Welcome back")).toBeInTheDocument();
+    expect(screenn.getByPlaceholderText("Your username")).toBeInTheDocument();
+    expect(screenn.getByPlaceholderText("Your password")).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /sign in/i }),
+      screenn.getByRole("button", { name: /sign in/i }),
     ).toBeInTheDocument();
   });
 
@@ -65,9 +65,9 @@ describe("Login Component", () => {
 
     render(<Login />);
 
-    const usernameInput = screen.getByPlaceholderText("Your username");
-    const passwordInput = screen.getByPlaceholderText("Your password");
-    const submitButton = screen.getByRole("button", { name: /sign in/i });
+    const usernameInput = screenn.getByPlaceholderText("Your username");
+    const passwordInput = screenn.getByPlaceholderText("Your password");
+    const submitButton = screenn.getByRole("button", { name: /sign in/i });
 
     await user.type(usernameInput, "testuser");
     await user.type(passwordInput, "password123");
@@ -104,16 +104,16 @@ describe("Login Component", () => {
 
     render(<Login />);
 
-    const usernameInput = screen.getByPlaceholderText("Your username");
-    const passwordInput = screen.getByPlaceholderText("Your password");
-    const submitButton = screen.getByRole("button", { name: /sign in/i });
+    const usernameInput = screenn.getByPlaceholderText("Your username");
+    const passwordInput = screenn.getByPlaceholderText("Your password");
+    const submitButton = screenn.getByRole("button", { name: /sign in/i });
 
     await user.type(usernameInput, "testuser");
     await user.type(passwordInput, "wrongpassword");
     await user.click(submitButton);
 
     await waitFor(() => {
-      expect(screen.getByText(/Invalid credentials/i)).toBeInTheDocument();
+      expect(screenn.getByText(/Invalid credentials/i)).toBeInTheDocument();
     });
   });
 
@@ -142,9 +142,9 @@ describe("Login Component", () => {
 
     render(<Login />);
 
-    const usernameInput = screen.getByPlaceholderText("Your username");
-    const passwordInput = screen.getByPlaceholderText("Your password");
-    const submitButton = screen.getByRole("button", { name: /sign in/i });
+    const usernameInput = screenn.getByPlaceholderText("Your username");
+    const passwordInput = screenn.getByPlaceholderText("Your password");
+    const submitButton = screenn.getByRole("button", { name: /sign in/i });
 
     await user.type(usernameInput, "testuser");
     await user.type(passwordInput, "password123");
