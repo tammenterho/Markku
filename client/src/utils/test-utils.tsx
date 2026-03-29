@@ -1,6 +1,11 @@
 /* eslint-disable react-refresh/only-export-components */
 import React, { type ReactElement } from "react";
-import { render, type RenderOptions } from "@testing-library/react";
+import {
+  render,
+  type RenderOptions,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { MantineProvider } from "@mantine/core";
 
 const AllTheProviders = ({ children }: { children: React.ReactNode }) => {
@@ -12,5 +17,4 @@ const customRender = (
   options?: Omit<RenderOptions, "wrapper">,
 ) => render(ui, { wrapper: AllTheProviders, ...options });
 
-export * from "@testing-library/react";
-export { customRender as render };
+export { customRender as render, screen, waitFor };

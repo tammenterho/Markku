@@ -30,7 +30,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL, IS_DEMO_APP } from "../utils/constants";
 import { getUserId, getUsernameFromToken } from "../utils/auth";
-import { parseLocalDate } from "../utils/common";
+import { parseLocalDate, toLocalISOString } from "../utils/common";
 import { genderOptions, ctaOptions } from "../utils/campaignLabels";
 import {
   IconAd,
@@ -275,8 +275,8 @@ const CreateCampaign = () => {
       budgetPeriod: values.budgetPeriod,
       mediaInfo: values.mediaInfo,
       imageUrls,
-      start: values.startDate,
-      end: values.endDate,
+      start: toLocalISOString(values.startDate),
+      end: toLocalISOString(values.endDate),
       targetArea: values.targetArea,
       targetAge: Array.isArray(values.targetAge)
         ? `[${values.targetAge[0]},${values.targetAge[1]}]`
