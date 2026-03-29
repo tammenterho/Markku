@@ -155,7 +155,6 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
         const nums = r.match(/\d+/g);
         return nums && nums.length >= 2 ? `${nums[0]}-${nums[1]}` : r;
       };
-      console.log("TÄSSÄ KAMPANJA", campaign.start);
 
       form.setValues({
         company: campaign.company,
