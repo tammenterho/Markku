@@ -2,6 +2,8 @@ export const API_BASE_URL = import.meta.env.DEV
   ? "http://localhost:3000"
   : "/api";
 
+export const IS_DEMO_APP = import.meta.env.VITE_APP_VARIANT === "demo";
+
 export const USER_ID_HEADER = "x-user-id";
 
 export const STORAGE_KEYS = {

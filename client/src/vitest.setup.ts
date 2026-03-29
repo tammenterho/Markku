@@ -1,5 +1,10 @@
 import { vi } from "vitest";
 import "@testing-library/jest-dom";
+import { screen, waitFor } from "@testing-library/react";
+
+// Make screen and waitFor available globally
+globalThis.screenn = screen;
+globalThis.waitFor = waitFor;
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {

@@ -1,6 +1,7 @@
 # Markku - marketing scheduler
 [![Run Tests](https://github.com/tammenterho/Markku/actions/workflows/tests.yml/badge.svg)](https://github.com/tammenterho/Markku/actions/workflows/tests.yml)
 [![Deploy](https://github.com/tammenterho/Markku/actions/workflows/deploy.yml/badge.svg)](https://github.com/tammenterho/Markku/actions/workflows/deploy.yml)
+[![Demo Deploy](https://github.com/tammenterho/Markku/actions/workflows/demo-deploy.yml/badge.svg)](https://github.com/tammenterho/Markku/actions/workflows/demo-deploy.yml)
 
 Markku is a full-stack campaign and marketing scheduling application with a React frontend, NestJS backend, and PostgreSQL database.
 
@@ -34,6 +35,12 @@ Markku is a full-stack campaign and marketing scheduling application with a Reac
 ### DevOps & Tooling
 
 - **GitHub Actions** for deployment workflow (`deploy.yml`)
+
+## Deployment
+
+- Production workflow: `.github/workflows/deploy.yml` runs `.scripts/deploy.sh`
+- Demo workflow: `.github/workflows/demoDeploy.yml` runs `.scripts/deploy-demo.sh`
+- Demo workflow supports dedicated secrets (`HOST_DEMO`, `USERNAME_DEMO`, `PORT_DEMO`, `SSHKEY_DEMO`) and falls back to production secrets if demo-specific secrets are not set.
 
 
 ## Local Development

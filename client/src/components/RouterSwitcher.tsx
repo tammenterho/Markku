@@ -5,7 +5,9 @@ import { isAuthenticated } from "../utils/auth";
 const NotFound = lazy(() => import("./NotFound"));
 const CreateCampaign = lazy(() => import("./CreateCampaign"));
 const CampaignList = lazy(() =>
-  import("./campaignList").then((module) => ({ default: module.CampaignList })),
+  import("./CampaignListView").then((module) => ({
+    default: module.CampaignList,
+  })),
 );
 const Settings = lazy(() => import("./Settings"));
 const Login = lazy(() => import("./Login"));
