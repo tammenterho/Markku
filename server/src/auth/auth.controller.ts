@@ -1,4 +1,12 @@
-import { Controller, Post, Body, UseGuards, Req, Res } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  UseGuards,
+  Req,
+  Res,
+  Patch,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthGuard } from '@nestjs/passport';
 import type { Request } from 'express';
@@ -23,6 +31,20 @@ export class AuthController {
     );
     this.setRefreshCookie(res, refreshToken);
     return { accessToken };
+  }
+
+  @Patch('password')
+  @UseGuards(AuthGuard('jwt'))
+  async changePassword(
+    @Req() req: Request,
+    @Body() body: { currentPassword: string; newPassword: string },
+  ) {
+    const user = req.user as User;
+    return this.authService.changePassword(
+      user.id,
+      body.currentPassword,
+      body.newPassword,
+    );
   }
 
   @Post('refresh')
