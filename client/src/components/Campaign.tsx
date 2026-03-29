@@ -20,7 +20,7 @@ import { Title } from "@mantine/core";
 import axios from "axios";
 import { USER_ID_HEADER, API_BASE_URL } from "../utils/constants";
 import { getUserId } from "../utils/auth";
-import { formatDate, parseLocalDate } from "../utils/common";
+import { formatDate, parseLocalDate, toLocalISOString } from "../utils/common";
 import {
   type BudgetPeriod,
   type CampaignType,
@@ -187,7 +187,11 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
 
     try {
       const userId = getUserId();
-      const payload = { ...values };
+      const payload = {
+        ...values,
+        start: toLocalISOString(values.start),
+        end: toLocalISOString(values.end),
+      };
       if (typeof values.targetAge === "string") {
         const m = values.targetAge.match(/^(\d+)-(\d+)$/);
         if (m) {
