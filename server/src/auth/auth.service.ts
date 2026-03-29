@@ -2,6 +2,7 @@ import {
   Injectable,
   ConflictException,
   UnauthorizedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { UsersService } from '../users/users.service';
 import { PasswordService } from './password.service';
@@ -29,6 +30,30 @@ export class AuthService {
     const passwordHash = await this.passwordService.hash(password);
 
     return this.userService.create(username, passwordHash);
+  }
+
+  async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ) {
+    const user = await this.userService.findById(userId);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    const isValid = await this.passwordService.compare(
+      currentPassword,
+      user.passwordHash,
+    );
+    if (!isValid) {
+      throw new BadRequestException('Current password is incorrect');
+    }
+
+    const newHash = await this.passwordService.hash(newPassword);
+    await this.userService.updatePassword(userId, newHash);
+
+    return { success: true };
   }
 
   login(user: User) {

@@ -1,8 +1,10 @@
 import {
+  Accordion,
   ActionIcon,
   Button,
   Center,
   Group,
+  PasswordInput,
   SegmentedControl,
   Stack,
   Table,
@@ -16,7 +18,7 @@ import {
 import { useForm } from "@mantine/form";
 import axios from "axios";
 import { API_BASE_URL } from "../utils/constants";
-import { getUserId } from "../utils/auth";
+import { getAccessToken, getUserId } from "../utils/auth";
 import { useEffect, useState } from "react";
 import { IconCopy, IconMoon, IconSun } from "@tabler/icons-react";
 
@@ -98,70 +100,85 @@ const Settings = () => {
         />
       </Stack>
 
-      <Stack align="flex-start" mt="lg">
-        <Title order={4}>Yritystiedot</Title>
-        <Stack align="flex-start">
-          <Title order={5} mb="xs">
-            Luo yritys
-          </Title>
-          <Text size="sm" c="dimmed" mb="sm" fs={"italic"}>
-            Luo uusi yritys ja ala hallita sen kampanjoita.
-          </Text>
-          <CompanyActionForm mode="create" onSuccess={fetchUserCompanies} />
+      <Accordion variant="separated" mt="lg" mb="xl">
+        <Accordion.Item value="password">
+          <Accordion.Control>
+            <Title order={4}>Vaihda salasana</Title>
+          </Accordion.Control>
+          <Accordion.Panel>
+            <ChangePasswordForm />
+          </Accordion.Panel>
+        </Accordion.Item>
 
-          <Title order={5} mb="xs" mt="md">
-            Yhdistä yritys
-          </Title>
-          <Text size="sm" c="dimmed" mb="sm" fs={"italic"}>
-            Syötä tähän olemassa olevan yrityksen Linkitys ID ja paina yhdistä,
-            niin näet yrityksen kampanjat.
-          </Text>
-          <CompanyActionForm mode="join" onSuccess={fetchUserCompanies} />
-        </Stack>
+        <Accordion.Item value="companies">
+          <Accordion.Control>
+            <Title order={4}>Yritystiedot</Title>
+          </Accordion.Control>
+          <Accordion.Panel>
+            <Stack align="flex-start">
+              <Title order={5} mb="xs">
+                Luo yritys
+              </Title>
+              <Text size="sm" c="dimmed" mb="sm" fs={"italic"}>
+                Luo uusi yritys ja ala hallita sen kampanjoita.
+              </Text>
+              <CompanyActionForm mode="create" onSuccess={fetchUserCompanies} />
 
-        <Title order={5} mb="sm">
-          Omat yritykset
-        </Title>
-        {userCompanies.length === 0 ? (
-          <Text c="dimmed">Ei yrityksiä</Text>
-        ) : (
-          <Table
-            striped
-            highlightOnHover
-            withTableBorder
-            withColumnBorders
-            verticalSpacing="md"
-          >
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Nimi</Table.Th>
-                <Table.Th>Linkitys ID</Table.Th>
-              </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {userCompanies.map((c) => (
-                <Table.Tr key={c.id}>
-                  <Table.Td>{c.name}</Table.Td>
-                  <Table.Td>
-                    <Group gap="xs">
-                      <Text>{c.id}</Text>
-                      <Tooltip label="Kopioi">
-                        <ActionIcon
-                          variant="subtle"
-                          color="gray"
-                          onClick={() => handleCopyId(c.id)}
-                        >
-                          <IconCopy size={16} />
-                        </ActionIcon>
-                      </Tooltip>
-                    </Group>
-                  </Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        )}
-      </Stack>
+              <Title order={5} mb="xs" mt="md">
+                Yhdistä yritys
+              </Title>
+              <Text size="sm" c="dimmed" mb="sm" fs={"italic"}>
+                Syötä tähän olemassa olevan yrityksen Linkitys ID ja paina
+                yhdistä, niin näet yrityksen kampanjat.
+              </Text>
+              <CompanyActionForm mode="join" onSuccess={fetchUserCompanies} />
+
+              <Title order={5} mb="sm" mt="md">
+                Omat yritykset
+              </Title>
+              {userCompanies.length === 0 ? (
+                <Text c="dimmed">Ei yrityksiä</Text>
+              ) : (
+                <Table
+                  striped
+                  highlightOnHover
+                  withTableBorder
+                  withColumnBorders
+                  verticalSpacing="md"
+                >
+                  <Table.Thead>
+                    <Table.Tr>
+                      <Table.Th>Nimi</Table.Th>
+                      <Table.Th>Linkitys ID</Table.Th>
+                    </Table.Tr>
+                  </Table.Thead>
+                  <Table.Tbody>
+                    {userCompanies.map((c) => (
+                      <Table.Tr key={c.id}>
+                        <Table.Td>{c.name}</Table.Td>
+                        <Table.Td>
+                          <Group gap="xs">
+                            <Text>{c.id}</Text>
+                            <Tooltip label="Kopioi">
+                              <ActionIcon
+                                variant="subtle"
+                                color="gray"
+                                onClick={() => handleCopyId(c.id)}
+                              >
+                                <IconCopy size={16} />
+                              </ActionIcon>
+                            </Tooltip>
+                          </Group>
+                        </Table.Td>
+                      </Table.Tr>
+                    ))}
+                  </Table.Tbody>
+                </Table>
+              )}
+            </Stack>
+          </Accordion.Panel>
+        </Accordion.Item>
+      </Accordion>
     </div>
   );
 };
@@ -227,6 +244,92 @@ const CompanyActionForm = ({
         />
         <Button type="submit">{mode === "create" ? "Luo" : "Yhdistä"}</Button>
       </Group>
+    </form>
+  );
+};
+
+const ChangePasswordForm = () => {
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState<{
+    type: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const form = useForm({
+    initialValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+    validate: {
+      currentPassword: (value) =>
+        value.length < 1 ? "Nykyinen salasana vaaditaan" : null,
+      newPassword: (value) =>
+        value.length < 6 ? "Salasanan tulee olla vähintään 6 merkkiä" : null,
+      confirmPassword: (value, values) =>
+        value !== values.newPassword ? "Salasanat eivät täsmää" : null,
+    },
+  });
+
+  const handleSubmit = async (values: typeof form.values) => {
+    setLoading(true);
+    setMessage(null);
+
+    try {
+      const token = getAccessToken();
+      await axios.patch(
+        `${apiBase}/auth/password`,
+        {
+          currentPassword: values.currentPassword,
+          newPassword: values.newPassword,
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
+      setMessage({
+        type: "success",
+        text: "Salasana vaihdettu onnistuneesti!",
+      });
+      form.reset();
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.data?.message) {
+        setMessage({ type: "error", text: err.response.data.message });
+      } else {
+        setMessage({ type: "error", text: "Salasanan vaihto epäonnistui" });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <form onSubmit={form.onSubmit(handleSubmit)}>
+      <Stack gap="sm" w="20rem">
+        <PasswordInput
+          label="Nykyinen salasana"
+          placeholder="Anna nykyinen salasana"
+          {...form.getInputProps("currentPassword")}
+        />
+        <PasswordInput
+          label="Uusi salasana"
+          placeholder="Anna uusi salasana"
+          {...form.getInputProps("newPassword")}
+        />
+        <PasswordInput
+          label="Vahvista uusi salasana"
+          placeholder="Anna uusi salasana uudelleen"
+          {...form.getInputProps("confirmPassword")}
+        />
+        {message && (
+          <Text size="sm" c={message.type === "success" ? "green" : "red"}>
+            {message.text}
+          </Text>
+        )}
+        <Button type="submit" loading={loading}>
+          Vaihda salasana
+        </Button>
+      </Stack>
     </form>
   );
 };
