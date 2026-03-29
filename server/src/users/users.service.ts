@@ -25,6 +25,10 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
+  async updatePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.usersRepository.update(userId, { passwordHash });
+  }
+
   async addCompanyToUserById(
     userId: string,
     companyId: string,

@@ -79,8 +79,7 @@ const filterCampaigns = (campaigns: CampaignType[], filter: FilterType) => {
       return true;
     }
 
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
+    const now = new Date(Date.now());
     const start = new Date(campaign.start);
     const end = new Date(campaign.end);
 
@@ -169,7 +168,10 @@ const CampaignFilterButtons = ({
       aria-label="Menneet"
       leftSection={
         !isMobile ? (
-          <IconTriangleFilled size={12} style={{ transform: "rotate(-90deg)" }} />
+          <IconTriangleFilled
+            size={12}
+            style={{ transform: "rotate(-90deg)" }}
+          />
         ) : undefined
       }
     >
@@ -193,7 +195,10 @@ const CampaignFilterButtons = ({
       aria-label="Tulevat"
       leftSection={
         !isMobile ? (
-          <IconTriangleFilled size={12} style={{ transform: "rotate(90deg)" }} />
+          <IconTriangleFilled
+            size={12}
+            style={{ transform: "rotate(90deg)" }}
+          />
         ) : undefined
       }
     >
