@@ -54,6 +54,7 @@ export class CompaniesService {
         "budget" numeric NOT NULL DEFAULT 0,
         "budgetPeriod" varchar(255),
         "mediaInfo" varchar(255),
+        "imageUrls" text[] DEFAULT '{}',
         "start" timestamp,
         "end" timestamp,
         "targetArea" varchar(100),
@@ -74,7 +75,9 @@ export class CompaniesService {
       return company;
     } catch (error) {
       await queryRunner.rollbackTransaction();
-      this.logger.error(`Error creating company: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error creating company: ${errorMessage}`);
       throw error;
     } finally {
       await queryRunner.release();

@@ -28,7 +28,12 @@ export class CampaignsService {
     return `${TENANT_PREFIX}${companyId}`;
   }
 
-  private async ensureCampaignImageUrlsColumn(schema: string): Promise<void> {
+  private async ensureCampaignSchemaCompatibility(
+    schema: string,
+  ): Promise<void> {
+    await this.dataSource.query(
+      `ALTER TABLE "${schema}".campaigns DROP COLUMN IF EXISTS "clientId"`,
+    );
     await this.dataSource.query(
       `ALTER TABLE "${schema}".campaigns ADD COLUMN IF NOT EXISTS "imageUrls" text[] DEFAULT '{}'`,
     );
@@ -82,7 +87,9 @@ export class CampaignsService {
         this.logger.log(`Found ${rows.length} campaigns in ${schema}`);
         allCampaigns.push(...rows);
       } catch (error) {
-        this.logger.error(`Error querying ${schema}: ${error.message}`);
+        const errorMessage =
+          error instanceof Error ? error.message : String(error);
+        this.logger.error(`Error querying ${schema}: ${errorMessage}`);
       }
     }
 
@@ -103,7 +110,7 @@ export class CampaignsService {
 
     this.logger.log(`Creating campaign in company ${company.id}`);
     const schema = this.getSchemaName(company.id);
-    await this.ensureCampaignImageUrlsColumn(schema);
+    await this.ensureCampaignSchemaCompatibility(schema);
 
     // Validoi ja filtteröi kentät
     const allowedFields = CAMPAIGN_ALLOWED_FIELDS as readonly string[];
@@ -127,8 +134,10 @@ export class CampaignsService {
       this.logger.log(`Campaign created successfully in ${schema}`);
       return result[0];
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       this.logger.error(
-        `Error creating campaign in ${schema}: ${error.message}`,
+        `Error creating campaign in ${schema}: ${errorMessage}`,
       );
       throw error;
     }
@@ -146,7 +155,7 @@ export class CampaignsService {
       throw new NotFoundException(`Campaign ${id} not found`);
     }
 
-    await this.ensureCampaignImageUrlsColumn(found.schema);
+    await this.ensureCampaignSchemaCompatibility(found.schema);
 
     // Validoi ja filtteröi kentät
     const allowedFields = CAMPAIGN_ALLOWED_FIELDS as readonly string[];
@@ -171,7 +180,9 @@ export class CampaignsService {
       this.logger.log(`Campaign ${id} updated in ${found.schema}`);
       return result[0];
     } catch (error) {
-      this.logger.error(`Error updating campaign ${id}: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error updating campaign ${id}: ${errorMessage}`);
       throw error;
     }
   }
@@ -192,7 +203,9 @@ export class CampaignsService {
       this.logger.log(`Campaign ${id} deleted from ${found.schema}`);
       return result[0];
     } catch (error) {
-      this.logger.error(`Error deleting campaign ${id}: ${error.message}`);
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error deleting campaign ${id}: ${errorMessage}`);
       throw error;
     }
   }
