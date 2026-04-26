@@ -1,6 +1,6 @@
 import { AppShell, Burger, Button, Group, Text } from "@mantine/core";
 import { getUsernameFromToken, logout } from "../utils/auth";
-import { IconLogout } from "@tabler/icons-react";
+import { IconLogout, IconUser } from "@tabler/icons-react";
 
 interface HeaderProps {
   toggle: () => void;
@@ -24,7 +24,17 @@ const Header = ({ toggle, opened }: HeaderProps) => {
 
         <Group gap="sm">
           <Text size="sm" c="dimmed">
-            {username ? `Signed in as ${username}` : "Signed in"}
+            {username ? (
+              <>
+                <IconUser
+                  size={20}
+                  style={{ verticalAlign: "middle", marginRight: 4 }}
+                />
+                {username}
+              </>
+            ) : (
+              "Signed in"
+            )}
           </Text>
           <Button
             size="xs"
