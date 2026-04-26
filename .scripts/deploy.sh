@@ -294,7 +294,7 @@ if [[ ! -f "$SHARED_ENV_FILE" ]]; then
 	exit 1
 fi
 run_with_privilege ln -sfn "$SHARED_ENV_FILE" .env
-npm run migration:run
+npm run migration:run:prod
 
 NEW_SERVER_RELEASE="$RELEASES_DIR/server/$TIMESTAMP"
 run_with_privilege mkdir -p "$NEW_SERVER_RELEASE"
