@@ -101,7 +101,6 @@ BEGIN
     EXECUTE format(
       'CREATE TABLE IF NOT EXISTS %I.campaigns (
         "id" uuid NOT NULL DEFAULT gen_random_uuid(),
-        "clientId" varchar(255) NOT NULL,
         "companyId" varchar(255) NOT NULL,
         "company" varchar(255) NOT NULL,
         "customer" varchar(255) NOT NULL,
@@ -168,7 +167,6 @@ BEGIN
         FROM campaign_dates
       )
       INSERT INTO %I.campaigns (
-        "clientId",
         "companyId",
         "company",
         "customer",
@@ -192,7 +190,6 @@ BEGIN
         "createdBy"
       )
       SELECT
-        'demo-' || %L || '-client-' || lpad(idx::text, 3, '0'),
         %L,
         %L,
         'Customer ' || idx,
