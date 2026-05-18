@@ -19,8 +19,9 @@ PREV_CLIENT_TARGET=""
 PREV_SERVER_TARGET=""
 USE_SUDO=false
 
+echo "hello prod"
+
 log() {
-  echo "hello production"
 	echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*"
 }
 
