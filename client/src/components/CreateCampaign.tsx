@@ -30,7 +30,6 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL, IS_DEMO_APP } from "../utils/constants";
 import { getUserId, getUsernameFromToken } from "../utils/auth";
-import { parseLocalDate, toLocalISOString } from "../utils/common";
 import { genderOptions, ctaOptions } from "../utils/campaignLabels";
 import {
   IconAd,
@@ -40,10 +39,28 @@ import {
   IconUpload,
   IconX,
 } from "@tabler/icons-react";
+import type { Campaign } from "./Campaign";
 
 const apiBase = API_BASE_URL;
 
 type PreviewFile = File & { preview: string; id: string };
+
+type CreateCampaignFormValues = Pick<
+  Campaign,
+  "type" | "budgetPeriod" | "targetArea" | "targetGender" | "mediaInfo"
+> & {
+  company: string;
+  name: string;
+  payer: string;
+  budget: string;
+  startDate: Date | null;
+  endDate: Date | null;
+  targetAge: number[] | string;
+  adTitle: string;
+  adText: string;
+  adUrl: string;
+  CTA: string;
+};
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
@@ -96,7 +113,7 @@ const CreateCampaign = () => {
     );
   });
 
-  const form = useForm({
+  const form = useForm<CreateCampaignFormValues>({
     initialValues: {
       type: copiedCampaign?.type || "AD",
       company: copiedCampaign?.companyId || copiedCampaign?.company || "",
@@ -104,13 +121,13 @@ const CreateCampaign = () => {
       payer: copiedCampaign?.customer || "",
       budget: copiedCampaign?.budget ? String(copiedCampaign.budget) : "",
       budgetPeriod: copiedCampaign?.budgetPeriod || "DURATION",
-      startDate: parseLocalDate(copiedCampaign?.start),
-      endDate: parseLocalDate(copiedCampaign?.end),
+      startDate: copiedCampaign?.start ? new Date(copiedCampaign.start) : null,
+      endDate: copiedCampaign?.end ? new Date(copiedCampaign.end) : null,
       targetArea: copiedCampaign?.targetArea || "",
       targetAge:
         copiedCampaign?.targetAge &&
         typeof copiedCampaign.targetAge === "string"
-          ? copiedCampaign.targetAge.match(/\d+/g)?.map(Number)
+          ? copiedCampaign.targetAge.match(/\d+/g)?.map(Number) || [18, 65]
           : [18, 65],
       targetGender: copiedCampaign?.targetGender || "All",
       adTitle: copiedCampaign?.title || "",
@@ -200,7 +217,7 @@ const CreateCampaign = () => {
     };
   }, []);
 
-  const handleSubmit = async (values: typeof form.values) => {
+  const handleSubmit = async (values: CreateCampaignFormValues) => {
     let uploadedImageUrls: string[] = [];
 
     if (IS_DEMO_APP && files.length > 0) {
@@ -275,8 +292,8 @@ const CreateCampaign = () => {
       budgetPeriod: values.budgetPeriod,
       mediaInfo: values.mediaInfo,
       imageUrls,
-      start: toLocalISOString(values.startDate),
-      end: toLocalISOString(values.endDate),
+      start: values.startDate ? String(values.startDate) : "",
+      end: values.endDate ? String(values.endDate) : "",
       targetArea: values.targetArea,
       targetAge: Array.isArray(values.targetAge)
         ? `[${values.targetAge[0]},${values.targetAge[1]}]`

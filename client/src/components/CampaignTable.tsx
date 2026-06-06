@@ -13,7 +13,7 @@ import {
   budgetPeriodLabels,
   typeLabels,
 } from "../utils/campaignLabels";
-import { formatAgeRange, formatDate } from "../utils/common";
+import { formatAgeRange } from "../utils/common";
 import classes from "./campaignList.module.css";
 import type { Campaign as CampaignType } from "./Campaign";
 
@@ -39,8 +39,30 @@ type CampaignTableProps = {
   onStatusToggle: (e: React.MouseEvent, campaign: CampaignType) => void;
 };
 
+const formatDateCell = (value: unknown): string => {
+  if (typeof value === "string") {
+    const m = value.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
+    if (m) {
+      const [, year, month, day, hour, minute] = m;
+      return `${hour}:${minute} ${day}.${month}.${year}`;
+    }
+    return value;
+  }
+
+  if (value instanceof Date && !Number.isNaN(value.getTime())) {
+    const year = String(value.getFullYear());
+    const month = String(value.getMonth() + 1).padStart(2, "0");
+    const day = String(value.getDate()).padStart(2, "0");
+    const hour = String(value.getHours()).padStart(2, "0");
+    const minute = String(value.getMinutes()).padStart(2, "0");
+    return `${hour}:${minute} ${day}:${month}:${year}`;
+  }
+
+  return String(value ?? "");
+};
+
 const formatCampaignCell = (campaign: CampaignType, colKey: ColumnKey) => {
-  let content = campaign[colKey as keyof CampaignType] as string | number;
+  let content = campaign[colKey as keyof CampaignType] as unknown;
 
   if (
     colKey === "start" ||
@@ -48,7 +70,7 @@ const formatCampaignCell = (campaign: CampaignType, colKey: ColumnKey) => {
     colKey === "createdAt" ||
     colKey === "updatedAt"
   ) {
-    content = formatDate(content as unknown as Date);
+    content = formatDateCell(content);
   } else if (colKey === "budget") {
     content = `${content}€`;
   } else if (colKey === "budgetPeriod") {
@@ -59,11 +81,12 @@ const formatCampaignCell = (campaign: CampaignType, colKey: ColumnKey) => {
       content = formatAgeRange(content) || content;
     }
   } else if (colKey === "type") {
-    content =
-      typeLabels[content as CampaignTypeLabel] ?? (content as string);
+    content = typeLabels[content as CampaignTypeLabel] ?? (content as string);
   }
 
-  return content;
+  return typeof content === "string" || typeof content === "number"
+    ? content
+    : String(content ?? "");
 };
 
 const SortableHeader = ({
