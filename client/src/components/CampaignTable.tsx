@@ -40,22 +40,20 @@ type CampaignTableProps = {
 };
 
 const formatDateCell = (value: unknown): string => {
-  if (typeof value === "string") {
-    const m = value.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/);
-    if (m) {
-      const [, year, month, day, hour, minute] = m;
-      return `${hour}:${minute} ${day}.${month}.${year}`;
-    }
-    return value;
-  }
+  const date =
+    value instanceof Date
+      ? value
+      : typeof value === "string"
+        ? new Date(value)
+        : null;
 
-  if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    const year = String(value.getFullYear());
-    const month = String(value.getMonth() + 1).padStart(2, "0");
-    const day = String(value.getDate()).padStart(2, "0");
-    const hour = String(value.getHours()).padStart(2, "0");
-    const minute = String(value.getMinutes()).padStart(2, "0");
-    return `${hour}:${minute} ${day}:${month}:${year}`;
+  if (date && !Number.isNaN(date.getTime())) {
+    const year = String(date.getFullYear());
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hour = String(date.getHours()).padStart(2, "0");
+    const minute = String(date.getMinutes()).padStart(2, "0");
+    return `${hour}:${minute} ${day}.${month}.${year}`;
   }
 
   return String(value ?? "");
