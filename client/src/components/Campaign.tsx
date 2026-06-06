@@ -23,7 +23,6 @@ import { Title } from "@mantine/core";
 import axios from "axios";
 import { USER_ID_HEADER, API_BASE_URL } from "../utils/constants";
 import { getUserId } from "../utils/auth";
-import { formatDate, parseLocalDate, toLocalISOString } from "../utils/common";
 import { IconPhoto, IconUpload, IconX } from "@tabler/icons-react";
 import {
   type BudgetPeriod,
@@ -71,6 +70,31 @@ interface CampaignProps {
 const apiBase = API_BASE_URL;
 
 type PreviewFile = File & { preview: string; id: string };
+
+const toPickerDate = (value: string | Date | null | undefined): Date | null => {
+  if (!value) return null;
+
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+
+  const m = value.match(
+    /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/,
+  );
+  if (m) {
+    const year = Number(m[1]);
+    const month = Number(m[2]) - 1;
+    const day = Number(m[3]);
+    const hour = Number(m[4] || 0);
+    const minute = Number(m[5] || 0);
+    const second = Number(m[6] || 0);
+    const local = new Date(year, month, day, hour, minute, second);
+    return Number.isNaN(local.getTime()) ? null : local;
+  }
+
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
 
 const toAbsoluteUrl = (value: string): string => {
   const normalizedValue = value.trim();
@@ -177,8 +201,8 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
         targetArea: campaign.targetArea,
         budget: campaign.budget,
         budgetPeriod: campaign.budgetPeriod,
-        start: parseLocalDate(campaign.start),
-        end: parseLocalDate(campaign.end),
+        start: toPickerDate(campaign.start),
+        end: toPickerDate(campaign.end),
       });
 
       const initialImageUrls = (
@@ -283,8 +307,8 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
       const payload = {
         ...values,
         imageUrls,
-        start: toLocalISOString(values.start),
-        end: toLocalISOString(values.end),
+        start: values.start,
+        end: values.end,
       };
       if (typeof values.targetAge === "string") {
         const m = values.targetAge.match(/^(\d+)-(\d+)$/);
@@ -315,7 +339,7 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
       {campaign && (
         <form onSubmit={form.onSubmit(handleUpdate)}>
           <Text size="sm" fs={"italic"}>
-            Luonut: {campaign.createdBy} {formatDate(campaign.createdAt)}
+            Luonut: {campaign.createdBy} {String(campaign.createdAt)}
           </Text>
           <Text size="sm" fs={"italic"}>
             Tyyppi: {typeLabels[campaign.type]}

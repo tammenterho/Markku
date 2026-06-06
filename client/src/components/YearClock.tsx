@@ -7,7 +7,6 @@ import {
   useComputedColorScheme,
 } from "@mantine/core";
 import Campaign, { type Campaign as CampaignType } from "./Campaign";
-import { parseLocalDate } from "../utils/common";
 
 const WEEKS_IN_YEAR = 52;
 const MONTHS_IN_YEAR = 12;
@@ -67,6 +66,24 @@ const getCampaignWeeks = (start: Date, end: Date, year: number): number[] => {
 
 const GOLDEN_ANGLE = 137.508;
 
+const formatDateLabel = (value: string | Date): string => {
+  if (typeof value === "string") {
+    const m = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (m) {
+      const [, year, month, day] = m;
+      return `${day}.${month}.${year}`;
+    }
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const year = date.getFullYear();
+  return `${day}.${month}.${year}`;
+};
+
 interface CampaignSegment {
   campaign: CampaignType;
   period: number; // week, month, or quarter number
@@ -122,8 +139,8 @@ export const YearClock = ({
 
   // Filter campaigns that overlap with the target year
   const campaigns = allCampaigns.filter((c: CampaignType) => {
-    const start = parseLocalDate(c.start) ?? new Date(c.start);
-    const end = parseLocalDate(c.end) ?? new Date(c.end);
+    const start = new Date(c.start);
+    const end = new Date(c.end);
     const yearStart = new Date(year, 0, 1);
     const yearEnd = new Date(year, 11, 31);
     return !(end < yearStart || start > yearEnd);
@@ -145,8 +162,8 @@ export const YearClock = ({
   const segments: CampaignSegment[] = [];
   campaigns.forEach((campaign) => {
     const weeks = getCampaignWeeks(
-      parseLocalDate(campaign.start) ?? new Date(campaign.start),
-      parseLocalDate(campaign.end) ?? new Date(campaign.end),
+      new Date(campaign.start),
+      new Date(campaign.end),
       year,
     );
     const color = getCampaignColor(campaign.id);
@@ -176,8 +193,8 @@ export const YearClock = ({
 
   campaigns.forEach((campaign) => {
     const periods = getCampaignWeeks(
-      parseLocalDate(campaign.start) ?? new Date(campaign.start),
-      parseLocalDate(campaign.end) ?? new Date(campaign.end),
+      new Date(campaign.start),
+      new Date(campaign.end),
       year,
     );
 
@@ -390,7 +407,9 @@ export const YearClock = ({
                           }}
                         >
                           <title>
-                            {seg.campaign.name} - Viikko {week}
+                            {seg.campaign.name} -{" "}
+                            {formatDateLabel(seg.campaign.start)} -{" "}
+                            {formatDateLabel(seg.campaign.end)}
                           </title>
                         </path>
                       );
