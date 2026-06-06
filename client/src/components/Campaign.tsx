@@ -78,20 +78,6 @@ const toPickerDate = (value: string | Date | null | undefined): Date | null => {
     return Number.isNaN(value.getTime()) ? null : value;
   }
 
-  const m = value.match(
-    /^(\d{4})-(\d{2})-(\d{2})(?:[T\s](\d{2}):(\d{2})(?::(\d{2}))?)?/,
-  );
-  if (m) {
-    const year = Number(m[1]);
-    const month = Number(m[2]) - 1;
-    const day = Number(m[3]);
-    const hour = Number(m[4] || 0);
-    const minute = Number(m[5] || 0);
-    const second = Number(m[6] || 0);
-    const local = new Date(year, month, day, hour, minute, second);
-    return Number.isNaN(local.getTime()) ? null : local;
-  }
-
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
