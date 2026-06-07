@@ -55,8 +55,8 @@ export class CompaniesService {
         "budgetPeriod" varchar(255),
         "mediaInfo" varchar(255),
         "imageUrls" text[] DEFAULT '{}',
-        "start" timestamp,
-        "end" timestamp,
+        "start" timestamptz,
+        "end" timestamptz,
         "targetArea" varchar(100),
         "targetAge" varchar(50),
         "targetGender" varchar(50),
@@ -66,8 +66,8 @@ export class CompaniesService {
         "url" varchar(255),
         "cta" varchar(255),
         "createdBy" varchar(255) NOT NULL,
-        "createdAt" timestamp NOT NULL DEFAULT now(),
-        "updatedAt" timestamp NOT NULL DEFAULT now()
+        "createdAt" timestamptz NOT NULL DEFAULT now(),
+        "updatedAt" timestamptz NOT NULL DEFAULT now()
       )`);
       this.logger.log(`Campaigns table created in ${schemaName}`);
 
