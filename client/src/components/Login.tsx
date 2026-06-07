@@ -64,8 +64,14 @@ const Login = () => {
       ]);
 
       debugLog("hash-created", {
-        usernameHashPrefix: usernameHash.slice(0, 12),
-        passwordHashPrefix: passwordHash.slice(0, 12),
+        usernameHashPrefix:
+          typeof usernameHash === "string"
+            ? usernameHash.slice(0, 12)
+            : "invalid-hash",
+        passwordHashPrefix:
+          typeof passwordHash === "string"
+            ? passwordHash.slice(0, 12)
+            : "invalid-hash",
       });
 
       let response;

@@ -29,6 +29,9 @@ const mockAxios = axios as unknown as {
 describe("Login Component", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(authUtils.hashCredentialForAuth).mockImplementation(
+      async (value: string) => `sha256:${value}`,
+    );
   });
 
   it("should render login form", () => {
@@ -46,13 +49,13 @@ describe("Login Component", () => {
     const user = userEvent.setup();
 
     mockAxios.post.mockResolvedValueOnce({
-      data: { accessToken: "mock-token" },
-    });
-
-    mockAxios.get.mockResolvedValueOnce({
       data: {
+        accessToken: "mock-token",
         id: "user-123",
-        companies: ["company-1"],
+        user: {
+          id: "user-123",
+          companies: ["company-1"],
+        },
       },
     });
 
@@ -77,8 +80,8 @@ describe("Login Component", () => {
       expect(mockAxios.post).toHaveBeenCalledWith(
         expect.stringContaining("/auth/signin"),
         {
-          username: "testuser",
-          password: "password123",
+          username: "sha256:testuser",
+          password: "sha256:password123",
         },
         { withCredentials: true },
       );
@@ -95,6 +98,12 @@ describe("Login Component", () => {
   it("should display error message on login failure", async () => {
     const user = userEvent.setup();
 
+    mockAxios.post.mockRejectedValueOnce({
+      response: {
+        data: { message: "Invalid credentials" },
+      },
+      isAxiosError: true,
+    });
     mockAxios.post.mockRejectedValueOnce({
       response: {
         data: { message: "Invalid credentials" },
@@ -120,25 +129,14 @@ describe("Login Component", () => {
   it("should show loading state during submission", async () => {
     const user = userEvent.setup();
 
+    let resolveSignin: (value: unknown) => void = () => {};
+
     mockAxios.post.mockImplementationOnce(
       () =>
-        new Promise((resolve) =>
-          setTimeout(
-            () =>
-              resolve({
-                data: { accessToken: "mock-token" },
-              }),
-            100,
-          ),
-        ),
+        new Promise((resolve) => {
+          resolveSignin = resolve;
+        }),
     );
-
-    mockAxios.get.mockResolvedValueOnce({
-      data: {
-        id: "user-123",
-        companies: ["company-1"],
-      },
-    });
 
     render(<Login />);
 
@@ -148,9 +146,23 @@ describe("Login Component", () => {
 
     await user.type(usernameInput, "testuser");
     await user.type(passwordInput, "password123");
-    await user.click(submitButton);
+    const clickPromise = user.click(submitButton);
 
-    // Button should be in loading state
-    expect(submitButton).toHaveAttribute("data-loading", "true");
+    await waitFor(() => {
+      expect(submitButton).toHaveAttribute("data-loading", "true");
+    });
+
+    resolveSignin({
+      data: {
+        accessToken: "mock-token",
+        user: {
+          id: "user-123",
+          companies: ["company-1"],
+        },
+      },
+      status: 200,
+    });
+
+    await clickPromise;
   });
 });
