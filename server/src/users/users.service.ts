@@ -33,6 +33,10 @@ export class UsersService {
     await this.usersRepository.update(userId, { passwordHash });
   }
 
+  async markHashUpdated(userId: string): Promise<void> {
+    await this.usersRepository.update(userId, { hashUpdated: true });
+  }
+
   async addCompanyToUserById(
     userId: string,
     companyId: string,
