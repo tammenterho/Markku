@@ -290,11 +290,13 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
       );
 
       const userId = getUserId();
+      const normalizedStart = toPickerDate(values.start);
+      const normalizedEnd = toPickerDate(values.end);
       const payload = {
         ...values,
         imageUrls,
-        start: values.start,
-        end: values.end,
+        start: normalizedStart ? normalizedStart.toISOString() : null,
+        end: normalizedEnd ? normalizedEnd.toISOString() : null,
       };
       if (typeof values.targetAge === "string") {
         const m = values.targetAge.match(/^(\d+)-(\d+)$/);

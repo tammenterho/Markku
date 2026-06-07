@@ -53,10 +53,10 @@ export class Campaign {
   @Column({ type: 'text', array: true, nullable: true, default: () => "'{}'" })
   imageUrls: string[];
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   start: Date;
 
-  @Column({ type: 'timestamp', nullable: true })
+  @Column({ type: 'timestamptz', nullable: true })
   end: Date;
 
   @Column({ default: false })
@@ -74,9 +74,9 @@ export class Campaign {
   @Column({ name: 'createdBy', type: 'varchar', length: 255 })
   createdBy: string;
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamptz' })
   updatedAt: Date;
 }
