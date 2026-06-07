@@ -1,4 +1,4 @@
-import { MigrationInterface, QueryRunner } from 'typeorm';
+import type { MigrationInterface, QueryRunner } from 'typeorm';
 
 export class FixTenantCampaignClientId1772112000000
   implements MigrationInterface
@@ -6,7 +6,9 @@ export class FixTenantCampaignClientId1772112000000
   name = 'FixTenantCampaignClientId1772112000000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "campaigns" DROP COLUMN IF EXISTS "clientId"`);
+    await queryRunner.query(
+      `ALTER TABLE "campaigns" DROP COLUMN IF EXISTS "clientId"`,
+    );
 
     await queryRunner.query(`
       DO $$
@@ -33,7 +35,9 @@ export class FixTenantCampaignClientId1772112000000
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`ALTER TABLE "campaigns" ADD COLUMN IF NOT EXISTS "clientId" character varying(255)`);
+    await queryRunner.query(
+      `ALTER TABLE "campaigns" ADD COLUMN IF NOT EXISTS "clientId" character varying(255)`,
+    );
 
     await queryRunner.query(`
       DO $$
