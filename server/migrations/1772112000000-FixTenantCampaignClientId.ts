@@ -13,20 +13,20 @@ export class FixTenantCampaignClientId1772112000000
     await queryRunner.query(`
       DO $$
       DECLARE
-        schema_name text;
+        v_schema_name text;
       BEGIN
-        FOR schema_name IN
-          SELECT schema_name
-          FROM information_schema.schemata
-          WHERE schema_name LIKE 'tenant_%'
+        FOR v_schema_name IN
+          SELECT s.schema_name
+          FROM information_schema.schemata s
+          WHERE s.schema_name LIKE 'tenant_%'
         LOOP
           EXECUTE format(
             'ALTER TABLE %I.campaigns DROP COLUMN IF EXISTS "clientId"',
-            schema_name
+            v_schema_name
           );
           EXECUTE format(
             'ALTER TABLE %I.campaigns ADD COLUMN IF NOT EXISTS "imageUrls" text[] DEFAULT ''{}''',
-            schema_name
+            v_schema_name
           );
         END LOOP;
       END
@@ -42,16 +42,16 @@ export class FixTenantCampaignClientId1772112000000
     await queryRunner.query(`
       DO $$
       DECLARE
-        schema_name text;
+        v_schema_name text;
       BEGIN
-        FOR schema_name IN
-          SELECT schema_name
-          FROM information_schema.schemata
-          WHERE schema_name LIKE 'tenant_%'
+        FOR v_schema_name IN
+          SELECT s.schema_name
+          FROM information_schema.schemata s
+          WHERE s.schema_name LIKE 'tenant_%'
         LOOP
           EXECUTE format(
             'ALTER TABLE %I.campaigns ADD COLUMN IF NOT EXISTS "clientId" character varying(255)',
-            schema_name
+            v_schema_name
           );
         END LOOP;
       END
