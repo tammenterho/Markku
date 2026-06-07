@@ -9,7 +9,10 @@ import {
   Req,
   Logger,
 } from '@nestjs/common';
-import { CampaignsService } from './campaigns.service';
+import {
+  type PublishCampaignResponse,
+  CampaignsService,
+} from './campaigns.service';
 import { Campaign } from './campaign.entity';
 import { UsersService } from '../users/users.service';
 import type { Request } from 'express';
@@ -34,10 +37,52 @@ export class CampaignsController {
     }
     const user = await this.usersService.findById(userId);
     this.logger.log(
-      `User found for campaigns: ${user?.username}, companies: ${user?.companies}`,
+      `User found for campaigns: ${user?.username}, companies: ${JSON.stringify(user?.companies)}`,
     );
     if (!user || !user.companies) return [];
     return this.campaignsService.findAllByCompanyIds(user.companies);
+  }
+
+  @Get(':id')
+  async findOne(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ): Promise<Campaign> {
+    const userId = req.headers[USER_ID_HEADER] as string;
+    if (!userId) {
+      this.logger.warn('No user ID provided in request');
+      throw new Error('User ID required');
+    }
+
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.companies) {
+      throw new Error('User or companies not found');
+    }
+
+    return (await this.campaignsService.findOneByCompanyIds(
+      id,
+      user.companies,
+    )) as Campaign;
+  }
+
+  @Post(':id/publish')
+  async publish(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ): Promise<PublishCampaignResponse> {
+    this.logger.log(`Publishing campaign ${id} to Meta`);
+    const userId = req.headers[USER_ID_HEADER] as string;
+
+    if (!userId) {
+      throw new Error('User ID required');
+    }
+
+    const user = await this.usersService.findById(userId);
+    if (!user || !user.companies) {
+      throw new Error('User or companies not found');
+    }
+
+    return this.campaignsService.publish(id, user.companies);
   }
 
   @Post()
@@ -50,7 +95,7 @@ export class CampaignsController {
     @Param('id') id: string,
     @Body() campaign: Partial<Campaign>,
     @Req() req: Request,
-  ) {
+  ): Promise<Campaign> {
     this.logger.log(`Updating campaign ${id}`);
     this.logger.log(`Headers: ${JSON.stringify(req.headers)}`);
     const userId = req.headers[USER_ID_HEADER] as string;
@@ -64,11 +109,18 @@ export class CampaignsController {
     if (!user || !user.companies) {
       throw new Error('User or companies not found');
     }
-    return this.campaignsService.update(id, campaign, user.companies);
+    return (await this.campaignsService.update(
+      id,
+      campaign,
+      user.companies,
+    )) as Campaign;
   }
 
   @Delete(':id')
-  async delete(@Param('id') id: string, @Req() req: Request) {
+  async delete(
+    @Param('id') id: string,
+    @Req() req: Request,
+  ): Promise<Campaign> {
     this.logger.log(`Deleting campaign ${id}`);
     const userId = req.headers[USER_ID_HEADER] as string;
     if (!userId) {
@@ -78,6 +130,6 @@ export class CampaignsController {
     if (!user || !user.companies) {
       throw new Error('User or companies not found');
     }
-    return this.campaignsService.remove(id, user.companies);
+    return (await this.campaignsService.remove(id, user.companies)) as Campaign;
   }
 }
