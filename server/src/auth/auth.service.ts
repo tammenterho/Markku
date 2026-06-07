@@ -42,7 +42,7 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    const isValid = await this.passwordService.compare(
+    const isValid = await this.passwordService.compareCredential(
       currentPassword,
       user.passwordHash,
     );

@@ -3,11 +3,25 @@ import { API_BASE_URL, STORAGE_KEYS } from "./constants";
 
 const LAST_ACTIVITY_KEY = "lastActivityAt";
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000;
+const CLIENT_HASH_PREFIX = "sha256:";
 
 type JwtPayload = {
   exp?: number;
   sub?: string;
   username?: string;
+};
+
+export const hashCredentialForAuth = async (value: string): Promise<string> => {
+  const digest = await crypto.subtle.digest(
+    "SHA-256",
+    new TextEncoder().encode(value),
+  );
+  const bytes = new Uint8Array(digest);
+  const hex = Array.from(bytes, (byte) =>
+    byte.toString(16).padStart(2, "0"),
+  ).join("");
+
+  return `${CLIENT_HASH_PREFIX}${hex}`;
 };
 
 const decodeToken = (token: string | null): JwtPayload | null => {

@@ -20,6 +20,10 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id } });
   }
 
+  findActiveUsers(): Promise<User[]> {
+    return this.usersRepository.find({ where: { isActive: true } });
+  }
+
   create(username: string, passwordHash: string): Promise<User> {
     const user = this.usersRepository.create({ username, passwordHash });
     return this.usersRepository.save(user);

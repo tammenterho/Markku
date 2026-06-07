@@ -26,11 +26,16 @@ export class AuthController {
   @Post('signin')
   @UseGuards(AuthGuard('local'))
   signin(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const { accessToken, refreshToken } = this.authService.login(
-      req.user as User,
-    );
+    const user = req.user as User;
+    const { accessToken, refreshToken } = this.authService.login(user);
     this.setRefreshCookie(res, refreshToken);
-    return { accessToken };
+    return {
+      accessToken,
+      user: {
+        id: user.id,
+        companies: user.companies ?? [],
+      },
+    };
   }
 
   @Patch('password')

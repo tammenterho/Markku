@@ -287,6 +287,7 @@ const ChangePasswordForm = () => {
           headers: { Authorization: `Bearer ${token}` },
         },
       );
+
       setMessage({
         type: "success",
         text: "Salasana vaihdettu onnistuneesti!",
