@@ -62,6 +62,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     if (passwordResult.usedLegacy) {
       const upgradedHash = await this.passwordService.hash(passwordCredential);
       await this.usersService.updatePassword(user.id, upgradedHash);
+      await this.usersService.markHashUpdated(user.id);
     }
 
     return user;
