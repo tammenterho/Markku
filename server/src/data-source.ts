@@ -27,5 +27,9 @@ export const AppDataSource = new DataSource({
   entities: [__dirname + '/**/*.entity{.ts,.js}'],
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV !== 'production',
-  migrations: [__dirname + '/**/migrations/*{.ts,.js}'],
+  migrations: [
+    __dirname + '/**/migrations/*{.ts,.js}',
+    path.resolve(__dirname, '../migrations/*{.ts,.js}'),
+    path.resolve(__dirname, '../../migrations/*{.ts,.js}'),
+  ],
 });
