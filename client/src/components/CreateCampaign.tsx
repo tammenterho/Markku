@@ -217,6 +217,13 @@ const CreateCampaign = () => {
     };
   }, []);
 
+  const toIsoStringOrNull = (value: unknown): string | null => {
+    if (!value) return null;
+
+    const parsed = value instanceof Date ? value : new Date(String(value));
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+  };
+
   const handleSubmit = async (values: CreateCampaignFormValues) => {
     let uploadedImageUrls: string[] = [];
 
@@ -292,8 +299,8 @@ const CreateCampaign = () => {
       budgetPeriod: values.budgetPeriod,
       mediaInfo: values.mediaInfo,
       imageUrls,
-      start: values.startDate ? String(values.startDate) : "",
-      end: values.endDate ? String(values.endDate) : "",
+      start: toIsoStringOrNull(values.startDate),
+      end: toIsoStringOrNull(values.endDate),
       targetArea: values.targetArea,
       targetAge: Array.isArray(values.targetAge)
         ? `[${values.targetAge[0]},${values.targetAge[1]}]`
