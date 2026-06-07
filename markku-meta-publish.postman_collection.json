@@ -1,0 +1,228 @@
+{
+  "info": {
+    "name": "Markku Meta Publish",
+    "description": "Postman collection for signing in, resolving the current user id, fetching a campaign, and publishing it to Meta.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "78b4fd95-99a9-4a53-92e6-e7797b1f8a32"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "username",
+      "value": ""
+    },
+    {
+      "key": "password",
+      "value": ""
+    },
+    {
+      "key": "campaignId",
+      "value": "659e7d23-473b-8d69-cb77-c2fb00000000"
+    },
+    {
+      "key": "userId",
+      "value": ""
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Sign In",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('signin returns 201 or 200', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json.accessToken) {",
+                  "  pm.collectionVariables.set('accessToken', json.accessToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/x-www-form-urlencoded"
+              }
+            ],
+            "body": {
+              "mode": "urlencoded",
+              "urlencoded": [
+                {
+                  "key": "username",
+                  "value": "{{username}}",
+                  "type": "text"
+                },
+                {
+                  "key": "password",
+                  "value": "{{password}}",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/signin",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "signin"
+              ]
+            },
+            "description": "Signs in with the configured username and password. This stores the returned access token as a collection variable."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        {
+          "name": "Find User By Username",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('user lookup returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "if (json && json.id) {",
+                  "  pm.collectionVariables.set('userId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/users/{{username}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "users",
+                "{{username}}"
+              ]
+            },
+            "description": "Looks up the current user by username and stores the returned id as {{userId}}."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Campaigns",
+      "item": [
+        {
+          "name": "Get Campaign By Id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('campaign lookup returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaigns/{{campaignId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaigns",
+                "{{campaignId}}"
+              ]
+            },
+            "description": "Fetches a single campaign using the tenant-scoped x-user-id header."
+          },
+          "response": []
+        },
+        {
+          "name": "Publish Campaign To Meta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('publish returns 200', function () {",
+                  "  pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "const json = pm.response.json();",
+                  "pm.test('publish response contains meta ids', function () {",
+                  "  pm.expect(json.meta.metaCampaignId).to.be.a('string');",
+                  "  pm.expect(json.meta.metaAdSetId).to.be.a('string');",
+                  "  pm.expect(json.meta.metaCreativeId).to.be.a('string');",
+                  "  pm.expect(json.meta.metaAdId).to.be.a('string');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "{{userId}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/campaigns/{{campaignId}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "campaigns",
+                "{{campaignId}}",
+                "publish"
+              ]
+            },
+            "description": "Publishes the selected campaign to Meta. The backend uses META_* environment variables from the running server process."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
