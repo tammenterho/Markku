@@ -41,10 +41,6 @@
     "rxjs": "^7.8.1",
     "typeorm": "^0.3.27"
   },
-  "overrides": {
-    "ajv": "^8.18.0",
-    "minimatch": "^10.2.1"
-  },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@eslint/js": "^9.18.0",

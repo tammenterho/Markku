@@ -9,74 +9,95 @@ import {
 @Entity('campaigns') // tietokantataulun nimi
 export class Campaign {
   @PrimaryGeneratedColumn('uuid')
-  id: string; // automaattisesti generoitu UUID
+  id!: string; // automaattisesti generoitu UUID
 
   @Column({ type: 'varchar', length: 255 })
-  companyId: string;
+  companyId!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  company: string;
+  company!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  customer: string;
+  customer!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  name: string;
+  name!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  payer: string;
+  payer!: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
-  title: string;
+  title!: string;
 
   @Column({ type: 'text', nullable: true })
-  copyText: string;
+  copyText!: string;
 
   @Column({ type: 'int4range', nullable: true })
-  targetAge: string;
+  targetAge!: string;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  targetGender: string;
+  targetGender!: string;
 
   @Column({ type: 'varchar', length: 100, nullable: true })
-  targetArea: string;
+  targetArea!: string;
 
   @Column({ type: 'numeric', default: 0 })
-  budget: number;
+  budget!: number;
 
   @Column({ type: 'varchar', length: 255 })
-  budgetPeriod: string;
+  budgetPeriod!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  mediaInfo: string;
+  mediaInfo!: string;
 
   @Column({ type: 'text', array: true, nullable: true, default: () => "'{}'" })
-  imageUrls: string[];
+  imageUrls!: string[];
 
   @Column({ type: 'timestamptz', nullable: true })
-  start: Date;
+  start!: Date;
 
   @Column({ type: 'timestamptz', nullable: true })
-  end: Date;
+  end!: Date;
 
   @Column({ default: false })
-  status: boolean;
+  status!: boolean;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  metaCampaignId!: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  metaAdSetId!: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  metaCreativeId!: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  metaAdId!: string | null;
 
   @Column({ type: 'varchar', length: 50, nullable: true })
-  type: string;
+  metaPublishStatus!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  metaPublishError!: string | null;
+
+  @Column({ type: 'timestamp', nullable: true })
+  metaLastPublishedAt!: Date | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  type!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  url: string;
+  url!: string;
 
   @Column({ type: 'varchar', length: 255 })
-  cta: string;
+  cta!: string;
 
   @Column({ name: 'createdBy', type: 'varchar', length: 255 })
-  createdBy: string;
+  createdBy!: string;
 
   @CreateDateColumn({ type: 'timestamptz' })
-  createdAt: Date;
+  createdAt!: Date;
 
   @UpdateDateColumn({ type: 'timestamptz' })
-  updatedAt: Date;
+  updatedAt!: Date;
 }
