@@ -19,7 +19,7 @@ const Header = ({ toggle, opened }: HeaderProps) => {
       <Group h="100%" px="md" justify="space-between">
         <Group gap="md">
           <Burger opened={opened} onClick={toggle} hiddenFrom="sm" size="sm" />
-          <Text fw={700}>Markku</Text>
+          <Text fw={700}>Marketta</Text>
         </Group>
 
         <Group gap="sm">
