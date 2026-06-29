@@ -29,8 +29,8 @@ import axios from "axios";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import { API_BASE_URL, IS_DEMO_APP } from "../utils/constants";
-import { getUserId } from "../utils/auth";
-import { parseLocalDate } from "../utils/common";
+import { getUserId, getUsernameFromToken } from "../utils/auth";
+import { parseLocalDate, toLocalISOString } from "../utils/common";
 import { genderOptions, ctaOptions } from "../utils/campaignLabels";
 import {
   IconAd,
@@ -47,6 +47,8 @@ type PreviewFile = File & { preview: string; id: string };
 
 const CreateCampaign = () => {
   const navigate = useNavigate();
+  const userId = getUserId();
+  const username = getUsernameFromToken();
   const location = useLocation();
   const copiedCampaign = location.state?.campaign;
   const copiedImageUrls = Array.isArray(copiedCampaign?.imageUrls)
@@ -147,7 +149,6 @@ const CreateCampaign = () => {
   });
 
   const fetchUserCompanies = async () => {
-    const userId = getUserId();
     if (!userId) return;
     try {
       const res = await axios.get(`${apiBase}/users/${userId}/companies`);
@@ -169,7 +170,6 @@ const CreateCampaign = () => {
   };
 
   const handleCreateCompany = async () => {
-    const userId = getUserId();
     if (!userId || !newCompanyName.trim()) return;
 
     try {
@@ -215,17 +215,22 @@ const CreateCampaign = () => {
       });
 
       try {
-        const uploadResponse = await axios.post(`${apiBase}/photos/upload`, formData, {
-          headers: {
-            "Content-Type": "multipart/form-data",
+        const uploadResponse = await axios.post(
+          `${apiBase}/photos/upload`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
           },
-        });
+        );
 
         if (Array.isArray(uploadResponse.data?.files)) {
           uploadedImageUrls = uploadResponse.data.files
             .map((file: { url?: string; path?: string }) =>
               file.path
-                ? file.path.startsWith(`${apiBase}/`) || file.path.startsWith("/api/")
+                ? file.path.startsWith(`${apiBase}/`) ||
+                  file.path.startsWith("/api/")
                   ? file.path
                   : `${apiBase}${file.path}`
                 : file.url || "",
@@ -258,7 +263,6 @@ const CreateCampaign = () => {
     );
 
     const campaignData = {
-      clientId: "659e7d23473b8d69cb77c2fb",
       type: values.type,
       companyId: values.company, // nyt linkId
       company:
@@ -271,8 +275,8 @@ const CreateCampaign = () => {
       budgetPeriod: values.budgetPeriod,
       mediaInfo: values.mediaInfo,
       imageUrls,
-      start: values.startDate,
-      end: values.endDate,
+      start: toLocalISOString(values.startDate),
+      end: toLocalISOString(values.endDate),
       targetArea: values.targetArea,
       targetAge: Array.isArray(values.targetAge)
         ? `[${values.targetAge[0]},${values.targetAge[1]}]`
@@ -282,7 +286,7 @@ const CreateCampaign = () => {
       copyText: values.adText,
       url: values.adUrl,
       cta: values.CTA,
-      createdBy: "",
+      createdBy: username || "",
     };
 
     try {
@@ -324,6 +328,7 @@ const CreateCampaign = () => {
           <TextInput
             label="Yrityksen nimi"
             placeholder="Anna yrityksen nimi"
+            data-testid="new-company-name-input"
             value={newCompanyName}
             onChange={(e) => setNewCompanyName(e.currentTarget.value)}
             onKeyDown={(e) => {
@@ -349,6 +354,7 @@ const CreateCampaign = () => {
               <Button
                 onClick={handleCreateCompany}
                 disabled={!newCompanyName.trim()}
+                data-testid="create-company-submit-button"
               >
                 Luo yritys
               </Button>
@@ -378,6 +384,7 @@ const CreateCampaign = () => {
                 w="100%"
                 label="Yritys"
                 placeholder="Valitse yritys"
+                data-testid="company-select"
                 data={[
                   ...userCompanies.map((c) => ({ value: c.id, label: c.name })),
                   { value: "__create_new__", label: "+ Luo uusi yritys" },
@@ -394,6 +401,7 @@ const CreateCampaign = () => {
               <TextInput
                 w="100%"
                 label="Kampanjanimi"
+                data-testid="campaign-name-input"
                 {...form.getInputProps("name")}
               />
               {form.values.type === "AD" && (
@@ -401,6 +409,7 @@ const CreateCampaign = () => {
                   <TextInput
                     miw={{ base: "100%", sm: "200px" }}
                     label="Maksaja"
+                    data-testid="payer-input"
                     labelProps={{ style: { whiteSpace: "nowrap" } }}
                     {...form.getInputProps("payer")}
                   />
@@ -408,6 +417,7 @@ const CreateCampaign = () => {
                     miw={{ base: "100%", sm: "200px" }}
                     label="Budjetti"
                     type="number"
+                    data-testid="budget-input"
                     labelProps={{ style: { whiteSpace: "nowrap" } }}
                     {...form.getInputProps("budget")}
                   />
@@ -427,6 +437,7 @@ const CreateCampaign = () => {
                 <DateTimePicker
                   miw={{ base: "100%", sm: "200px" }}
                   label="Aloitus pvm"
+                  data-testid="start-date-picker"
                   labelProps={{ style: { whiteSpace: "nowrap" } }}
                   valueFormat="DD.MM.YYYY HH:mm"
                   locale="fi"
@@ -436,6 +447,7 @@ const CreateCampaign = () => {
                   <DateTimePicker
                     miw={{ base: "100%", sm: "200px" }}
                     label="Lopetus pvm"
+                    data-testid="end-date-picker"
                     labelProps={{ style: { whiteSpace: "nowrap" } }}
                     valueFormat="DD.MM.YYYY HH:mm"
                     locale="fi"
@@ -454,12 +466,14 @@ const CreateCampaign = () => {
                   <Group grow align="flex-start">
                     <TextInput
                       label="Alue"
+                      data-testid="target-area-input"
                       labelProps={{ style: { whiteSpace: "nowrap" } }}
                       {...form.getInputProps("targetArea")}
                     />
                     <Select
                       label="Sukupuoli"
                       data={genderOptions}
+                      data-testid="target-gender-select"
                       labelProps={{ style: { whiteSpace: "nowrap" } }}
                       {...form.getInputProps("targetGender")}
                     />
@@ -496,17 +510,20 @@ const CreateCampaign = () => {
                 <Textarea
                   w="100%"
                   label="Otsikko"
+                  data-testid="ad-title-textarea"
                   {...form.getInputProps("adTitle")}
                 />
               )}
               <Textarea
                 w="100%"
                 label={form.values.type === "AD" ? "Mainosteksti" : "Caption"}
+                data-testid="ad-text-textarea"
                 {...form.getInputProps("adText")}
               />
               <TextInput
                 w="100%"
                 label="Media info"
+                data-testid="media-info-input"
                 {...form.getInputProps("mediaInfo")}
               />
               <div>
@@ -579,18 +596,25 @@ const CreateCampaign = () => {
                   <TextInput
                     w="100%"
                     label="URL"
+                    data-testid="ad-url-input"
                     {...form.getInputProps("adUrl")}
                   />
                   <Select
                     w="100%"
                     label="Toimintakutsu"
                     data={ctaOptions}
+                    data-testid="cta-select"
                     {...form.getInputProps("CTA")}
                   />
                 </>
               )}
               <Group mt="md">
-                <Button type="submit">Luo</Button>
+                <Button
+                  type="submit"
+                  data-testid="create-campaign-submit-button"
+                >
+                  Luo
+                </Button>
               </Group>
             </Stack>
           </Box>

@@ -20,7 +20,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm -- migration:generate -d src/data-source.ts migrations/InitTables",
-    "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts"
+    "migration:run": "npm run typeorm -- migration:run -d src/data-source.ts",
+    "migration:run:prod": "sh -c 'if [ -f dist/src/data-source.js ]; then typeorm migration:run -d dist/src/data-source.js; elif [ -f dist/data-source.js ]; then typeorm migration:run -d dist/data-source.js; elif [ -f src/data-source.js ]; then typeorm migration:run -d src/data-source.js; elif [ -f data-source.js ]; then typeorm migration:run -d data-source.js; else echo Could not find data-source.js in dist/src, dist, src, or current directory >&2; exit 1; fi'"
   },
   "dependencies": {
     "@nestjs/common": "^11.1.9",

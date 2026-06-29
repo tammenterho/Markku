@@ -10,17 +10,21 @@ import {
   Select,
   SimpleGrid,
   Image,
+  ActionIcon,
 } from "@mantine/core";
+import { Dropzone, IMAGE_MIME_TYPE } from "@mantine/dropzone";
 import { useForm } from "@mantine/form";
 import { DateTimePicker } from "@mantine/dates";
 import "@mantine/dates/styles.css";
+import "@mantine/dropzone/styles.css";
 import "dayjs/locale/fi";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Title } from "@mantine/core";
 import axios from "axios";
 import { USER_ID_HEADER, API_BASE_URL } from "../utils/constants";
 import { getUserId } from "../utils/auth";
-import { formatDate, parseLocalDate } from "../utils/common";
+import { formatDate, parseLocalDate, toLocalISOString } from "../utils/common";
+import { IconPhoto, IconUpload, IconX } from "@tabler/icons-react";
 import {
   type BudgetPeriod,
   type CampaignType,
@@ -32,7 +36,6 @@ import {
 
 export interface Campaign {
   id: string;
-  clientId: string;
   companyId: string;
   company: string;
   customer: string;
@@ -67,6 +70,8 @@ interface CampaignProps {
 
 const apiBase = API_BASE_URL;
 
+type PreviewFile = File & { preview: string; id: string };
+
 const toAbsoluteUrl = (value: string): string => {
   const normalizedValue = value.trim();
 
@@ -78,10 +83,7 @@ const toAbsoluteUrl = (value: string): string => {
     return `https:${normalizedValue}`;
   }
 
-  if (
-    apiBase.startsWith("/") &&
-    normalizedValue.startsWith(`${apiBase}/`)
-  ) {
+  if (apiBase.startsWith("/") && normalizedValue.startsWith(`${apiBase}/`)) {
     return normalizedValue;
   }
 
@@ -119,12 +121,9 @@ const getImageUrls = (mediaInfo: string): string[] => {
 };
 
 const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
-  const imageUrls = campaign
-    ? (Array.isArray(campaign.imageUrls) && campaign.imageUrls.length > 0
-        ? campaign.imageUrls
-        : getImageUrls(campaign.mediaInfo)
-      ).map(toAbsoluteUrl)
-    : [];
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>([]);
+  const [files, setFiles] = useState<PreviewFile[]>([]);
+  const filesRef = useRef<PreviewFile[]>([]);
   const lastInitializedCampaignKey = useRef<string>("");
 
   const form = useForm({
@@ -182,16 +181,111 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
         end: parseLocalDate(campaign.end),
       });
 
+      const initialImageUrls = (
+        Array.isArray(campaign.imageUrls) && campaign.imageUrls.length > 0
+          ? campaign.imageUrls
+          : getImageUrls(campaign.mediaInfo)
+      ).map(toAbsoluteUrl);
+      setExistingImageUrls(initialImageUrls);
+
+      filesRef.current.forEach((file) => {
+        URL.revokeObjectURL(file.preview);
+      });
+      filesRef.current = [];
+      setFiles([]);
+
       lastInitializedCampaignKey.current = initializeKey;
     }
   }, [campaign, opened, form]);
+
+  useEffect(() => {
+    filesRef.current = files;
+  }, [files]);
+
+  useEffect(() => {
+    return () => {
+      filesRef.current.forEach((file) => {
+        URL.revokeObjectURL(file.preview);
+      });
+    };
+  }, []);
+
+  const removeExistingImage = (url: string) => {
+    setExistingImageUrls((prev) => prev.filter((imageUrl) => imageUrl !== url));
+  };
+
+  const removeFile = (id: string) => {
+    setFiles((prev) => {
+      const fileToRemove = prev.find((file) => file.id === id);
+      if (fileToRemove) {
+        URL.revokeObjectURL(fileToRemove.preview);
+      }
+      return prev.filter((file) => file.id !== id);
+    });
+  };
 
   const handleUpdate = async (values: typeof form.values) => {
     if (!campaign) return;
 
     try {
+      let uploadedImageUrls: string[] = [];
+
+      if (files.length > 0) {
+        const formData = new FormData();
+        files.forEach((file) => {
+          formData.append("files", file);
+        });
+
+        const uploadResponse = await axios.post(
+          `${apiBase}/photos/upload`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+            },
+          },
+        );
+
+        if (Array.isArray(uploadResponse.data?.files)) {
+          uploadedImageUrls = uploadResponse.data.files
+            .map((file: { url?: string; path?: string }) =>
+              file.path
+                ? file.path.startsWith(`${apiBase}/`) ||
+                  file.path.startsWith("/api/")
+                  ? file.path
+                  : `${apiBase}${file.path}`
+                : file.url || "",
+            )
+            .filter(Boolean);
+        } else if (typeof uploadResponse.data?.path === "string") {
+          uploadedImageUrls = [
+            uploadResponse.data.path.startsWith(`${apiBase}/`) ||
+            uploadResponse.data.path.startsWith("/api/")
+              ? uploadResponse.data.path
+              : `${apiBase}${uploadResponse.data.path}`,
+          ];
+        } else if (typeof uploadResponse.data?.filename === "string") {
+          uploadedImageUrls = [
+            `${apiBase}/uploads/${uploadResponse.data.filename}`,
+          ];
+        }
+
+        if (files.length > 0 && uploadedImageUrls.length === 0) {
+          throw new Error("Upload response did not contain file URLs");
+        }
+      }
+
+      const imageUrls = [...existingImageUrls, ...uploadedImageUrls].filter(
+        (value, index, arr) => arr.indexOf(value) === index,
+      );
+
       const userId = getUserId();
-      const payload = { ...values };
+      const payload = {
+        ...values,
+        imageUrls,
+        start: toLocalISOString(values.start),
+        end: toLocalISOString(values.end),
+      };
       if (typeof values.targetAge === "string") {
         const m = values.targetAge.match(/^(\d+)-(\d+)$/);
         if (m) {
@@ -278,10 +372,99 @@ const Campaign = ({ campaign, opened, onClose, onUpdate }: CampaignProps) => {
               label="Mediatiedot"
               {...form.getInputProps("mediaInfo")}
             />
-            {imageUrls.length > 0 && (
+            <Dropzone
+              onDrop={(acceptedFiles) => {
+                setFiles((prev) => [
+                  ...prev,
+                  ...acceptedFiles.map((file) =>
+                    Object.assign(file, {
+                      preview: URL.createObjectURL(file),
+                      id:
+                        typeof crypto !== "undefined" &&
+                        typeof crypto.randomUUID === "function"
+                          ? crypto.randomUUID()
+                          : `${file.name}-${file.lastModified}-${Math.random()}`,
+                    }),
+                  ),
+                ]);
+              }}
+              onReject={(rejectedFiles) =>
+                console.log("rejected files", rejectedFiles)
+              }
+              maxSize={5 * 1024 ** 2}
+              accept={IMAGE_MIME_TYPE}
+            >
+              <Group
+                justify="center"
+                gap="xl"
+                mih={100}
+                style={{ pointerEvents: "none" }}
+              >
+                <Dropzone.Accept>
+                  <IconUpload
+                    size={52}
+                    color="var(--mantine-color-blue-6)"
+                    stroke={1.5}
+                  />
+                </Dropzone.Accept>
+                <Dropzone.Reject>
+                  <IconX
+                    size={52}
+                    color="var(--mantine-color-red-6)"
+                    stroke={1.5}
+                  />
+                </Dropzone.Reject>
+                <Dropzone.Idle>
+                  <IconPhoto
+                    size={52}
+                    color="var(--mantine-color-dimmed)"
+                    stroke={1.5}
+                  />
+                </Dropzone.Idle>
+
+                <div>
+                  <Text size="xl" inline>
+                    Pudota tänne kuvia tai klikkaa ja valitse tiedosto
+                  </Text>
+                  <Text size="sm" c="dimmed" inline mt={7}>
+                    Lisää niin monta kuvaa kuin haluat. Max. koko 5mb
+                  </Text>
+                </div>
+              </Group>
+            </Dropzone>
+            {(existingImageUrls.length > 0 || files.length > 0) && (
               <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }}>
-                {imageUrls.map((imageUrl) => (
-                  <Image key={imageUrl} src={imageUrl} radius="md" />
+                {existingImageUrls.map((imageUrl) => (
+                  <div key={imageUrl} style={{ position: "relative" }}>
+                    <Image src={imageUrl} radius="md" />
+                    <ActionIcon
+                      variant="filled"
+                      color="red"
+                      size="sm"
+                      radius="xl"
+                      style={{ position: "absolute", top: 5, right: 5 }}
+                      onClick={() => removeExistingImage(imageUrl)}
+                      aria-label="Poista olemassa oleva kuva"
+                    >
+                      <IconX size="70%" />
+                    </ActionIcon>
+                  </div>
+                ))}
+                {files.map((file) => (
+                  <div key={file.id} style={{ position: "relative" }}>
+                    <Image src={file.preview} radius="md" />
+                    <ActionIcon
+                      variant="filled"
+                      color="red"
+                      size="sm"
+                      radius="xl"
+                      style={{ position: "absolute", top: 5, right: 5 }}
+                      onClick={() => removeFile(file.id)}
+                      aria-label="Poista lisatty kuva"
+                    >
+                      <IconX size="70%" />
+                    </ActionIcon>
+                  </div>
                 ))}
               </SimpleGrid>
             )}
