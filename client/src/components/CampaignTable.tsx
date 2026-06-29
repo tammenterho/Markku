@@ -13,7 +13,7 @@ import {
   budgetPeriodLabels,
   typeLabels,
 } from "../utils/campaignLabels";
-import { formatAgeRange, formatDate } from "../utils/common";
+import { formatAgeRange } from "../utils/common";
 import classes from "./campaignList.module.css";
 import type { Campaign as CampaignType } from "./Campaign";
 
@@ -39,8 +39,28 @@ type CampaignTableProps = {
   onStatusToggle: (e: React.MouseEvent, campaign: CampaignType) => void;
 };
 
+const formatDateCell = (value: unknown): string => {
+  const date =
+    value instanceof Date
+      ? value
+      : typeof value === "string"
+        ? new Date(value)
+        : null;
+
+  if (date && !Number.isNaN(date.getTime())) {
+    const year = String(date.getFullYear());
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hour = String(date.getHours()).padStart(2, "0");
+    const minute = String(date.getMinutes()).padStart(2, "0");
+    return `${hour}:${minute} ${day}.${month}.${year}`;
+  }
+
+  return String(value ?? "");
+};
+
 const formatCampaignCell = (campaign: CampaignType, colKey: ColumnKey) => {
-  let content = campaign[colKey as keyof CampaignType] as string | number;
+  let content = campaign[colKey as keyof CampaignType] as unknown;
 
   if (
     colKey === "start" ||
@@ -48,7 +68,7 @@ const formatCampaignCell = (campaign: CampaignType, colKey: ColumnKey) => {
     colKey === "createdAt" ||
     colKey === "updatedAt"
   ) {
-    content = formatDate(content as unknown as Date);
+    content = formatDateCell(content);
   } else if (colKey === "budget") {
     content = `${content}€`;
   } else if (colKey === "budgetPeriod") {
@@ -59,11 +79,12 @@ const formatCampaignCell = (campaign: CampaignType, colKey: ColumnKey) => {
       content = formatAgeRange(content) || content;
     }
   } else if (colKey === "type") {
-    content =
-      typeLabels[content as CampaignTypeLabel] ?? (content as string);
+    content = typeLabels[content as CampaignTypeLabel] ?? (content as string);
   }
 
-  return content;
+  return typeof content === "string" || typeof content === "number"
+    ? content
+    : String(content ?? "");
 };
 
 const SortableHeader = ({

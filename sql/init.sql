@@ -21,15 +21,15 @@ CREATE TABLE IF NOT EXISTS tenant_1.campaigns (
   "budgetPeriod" varchar(255),
   "mediaInfo" varchar(255),
   "imageUrls" text[] DEFAULT '{}',
-  "start" timestamp,
-  "end" timestamp,
+  "start" timestamptz,
+  "end" timestamptz,
   "status" boolean NOT NULL DEFAULT false,
   "type" varchar(50),
   "url" varchar(255),
   "cta" varchar(255),
   "createdBy" varchar(255) NOT NULL,
-  "createdAt" timestamp NOT NULL DEFAULT now(),
-  "updatedAt" timestamp NOT NULL DEFAULT now(),
+  "createdAt" timestamptz NOT NULL DEFAULT now(),
+  "updatedAt" timestamptz NOT NULL DEFAULT now(),
   CONSTRAINT "PK_campaigns_id" PRIMARY KEY ("id")
 );
 

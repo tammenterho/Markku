@@ -1,18 +1,25 @@
 name: Deploy
 
-# Trigger the workflow on push and
-# pull request events on the master branch
 on:
   push:
     branches: ["main"]
   pull_request:
     branches: ["main"]
 
-# Authenticate to the the server via ssh
-# and run our deployment script
 jobs:
-  deploy:
+  validate:
+    name: Validate deploy script
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v3
+      - name: Check deploy script syntax
+        run: bash -n .scripts/deploy.sh
+
+  deploy:
+    name: Deploy to server
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
     steps:
       - uses: actions/checkout@v3
       - name: Deploy to Server

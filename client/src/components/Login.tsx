@@ -16,6 +16,7 @@ import { IconLogin } from "@tabler/icons-react";
 import axios from "axios";
 import { API_BASE_URL, IS_DEMO_APP } from "../utils/constants";
 import {
+  hashCredentialForAuth,
   markActivity,
   setAccessToken,
   setUserCompanies,
@@ -25,6 +26,10 @@ import {
 const Login = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const debugLog = (label: string, details?: Record<string, unknown>) => {
+    console.log(`[auth-debug] ${label}`, details ?? {});
+  };
 
   const demoDisclaimerLogin = IS_DEMO_APP ? (
     <Alert color="yellow" variant="light" radius="md" mb="md">
@@ -50,41 +55,107 @@ const Login = () => {
     const username = IS_DEMO_APP ? "demo" : values.username;
     const password = IS_DEMO_APP ? "demo" : values.password;
 
+    debugLog("submit", {
+      isDemoApp: IS_DEMO_APP,
+      usernameLength: username.length,
+      passwordLength: password.length,
+    });
+
     setLoading(true);
     setError(null);
 
     try {
-      const response = await axios.post(
-        `${API_BASE_URL}/auth/signin`,
-        {
-          username: IS_DEMO_APP ? "demo" : username,
-          password: IS_DEMO_APP ? "demo" : password,
-        },
-        { withCredentials: true },
-      );
+      const [usernameHash, passwordHash] = await Promise.all([
+        hashCredentialForAuth(username),
+        hashCredentialForAuth(password),
+      ]);
+
+      debugLog("hash-created", {
+        usernameHashPrefix:
+          typeof usernameHash === "string"
+            ? usernameHash.slice(0, 12)
+            : "invalid-hash",
+        passwordHashPrefix:
+          typeof passwordHash === "string"
+            ? passwordHash.slice(0, 12)
+            : "invalid-hash",
+      });
+
+      let response;
+
+      try {
+        debugLog("signin-attempt", { mode: "hashed" });
+        response = await axios.post(
+          `${API_BASE_URL}/auth/signin`,
+          {
+            username: usernameHash,
+            password: passwordHash,
+          },
+          { withCredentials: true },
+        );
+        debugLog("signin-success", {
+          mode: "hashed",
+          status: response.status,
+          hasAccessToken: Boolean(response.data?.accessToken),
+          hasUser: Boolean(response.data?.user),
+        });
+      } catch (firstErr: unknown) {
+        if (axios.isAxiosError(firstErr)) {
+          debugLog("signin-failed", {
+            mode: "hashed",
+            status: firstErr.response?.status,
+            message: firstErr.response?.data?.message ?? firstErr.message,
+          });
+
+          // Compatibility path for legacy bcrypt(raw password) rows.
+          debugLog("signin-attempt", { mode: "legacy-plaintext" });
+          response = await axios.post(
+            `${API_BASE_URL}/auth/signin`,
+            {
+              username,
+              password,
+            },
+            { withCredentials: true },
+          );
+          debugLog("signin-success", {
+            mode: "legacy-plaintext",
+            status: response.status,
+            hasAccessToken: Boolean(response.data?.accessToken),
+            hasUser: Boolean(response.data?.user),
+          });
+        } else {
+          debugLog("signin-failed", {
+            mode: "hashed",
+            errorType: typeof firstErr,
+          });
+          throw firstErr;
+        }
+      }
 
       if (response.data.accessToken) {
         setAccessToken(response.data.accessToken);
         markActivity();
 
-        // Hae käyttäjän tiedot ja tallenna companies localStorageen
-        try {
-          const userResponse = await axios.get(
-            `${API_BASE_URL}/users/${values.username}`,
-          );
-          if (userResponse.data.companies) {
-            setUserCompanies(userResponse.data.companies);
-          }
-          if (userResponse.data.id) {
-            setUserId(userResponse.data.id);
-          }
-        } catch (err) {
-          console.error("Error fetching user data:", err);
+        if (Array.isArray(response.data?.user?.companies)) {
+          setUserCompanies(response.data.user.companies);
+        }
+        if (response.data?.user?.id) {
+          setUserId(response.data.user.id);
         }
 
         window.location.href = "/";
       }
     } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        debugLog("login-final-error", {
+          status: err.response?.status,
+          message: err.response?.data?.message ?? err.message,
+          data: err.response?.data,
+        });
+      } else {
+        debugLog("login-final-error", { error: String(err) });
+      }
+
       if (axios.isAxiosError(err)) {
         setError(
           err.response?.data?.message || "Login failed. Please try again.",

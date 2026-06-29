@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './users.entity';
+import { Company } from '../companies/companies.entity';
 
 @Injectable()
 export class UsersService {
@@ -10,6 +11,8 @@ export class UsersService {
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
+    @InjectRepository(Company)
+    private companiesRepository: Repository<Company>,
   ) {}
 
   findByUsername(username: string): Promise<User | null> {
@@ -20,6 +23,10 @@ export class UsersService {
     return this.usersRepository.findOne({ where: { id } });
   }
 
+  findActiveUsers(): Promise<User[]> {
+    return this.usersRepository.find({ where: { isActive: true } });
+  }
+
   create(username: string, passwordHash: string): Promise<User> {
     const user = this.usersRepository.create({ username, passwordHash });
     return this.usersRepository.save(user);
@@ -27,6 +34,10 @@ export class UsersService {
 
   async updatePassword(userId: string, passwordHash: string): Promise<void> {
     await this.usersRepository.update(userId, { passwordHash });
+  }
+
+  async markHashUpdated(userId: string): Promise<void> {
+    await this.usersRepository.update(userId, { hashUpdated: true });
   }
 
   async addCompanyToUserById(
@@ -43,5 +54,16 @@ export class UsersService {
       await this.usersRepository.save(user);
     }
     return user;
+  }
+
+  async findCompaniesForUserById(userId: string): Promise<Company[]> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user || !user.companies?.length) return [];
+
+    const companies = await Promise.all(
+      user.companies.map((companyId) => this.companiesRepository.findOne({ where: { linkId: companyId } })),
+    );
+
+    return companies.filter((company): company is Company => company !== null);
   }
 }

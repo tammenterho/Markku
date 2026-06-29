@@ -20,6 +20,9 @@ export class User {
   @Column('text', { array: true, nullable: true })
   companies: string[];
 
+  @Column({ default: false })
+  hashUpdated: boolean;
+
   @Column({ default: true })
   isActive: boolean;
 
