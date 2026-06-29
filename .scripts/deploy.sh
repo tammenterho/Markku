@@ -320,7 +320,9 @@ run_with_privilege ln -sfn "$NEW_SERVER_RELEASE" "$CURRENT_SERVER_LINK"
 log "Reloading PM2 process with minimal downtime"
 cd "$CURRENT_SERVER_LINK"
 if pm2 describe "$APP_NAME" >/dev/null 2>&1; then
-	pm2 reload "$APP_NAME" --update-env
+	log "Restarting PM2 process from current release symlink"
+	pm2 delete "$APP_NAME"
+	start_pm2_process "$APP_NAME"
 else
 	start_pm2_process "$APP_NAME"
 fi

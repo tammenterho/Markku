@@ -11,7 +11,7 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
-    "start:prod": "APP_NAME=${APP_NAME:-markku-api} pm2 start dist/main.js --name \"$APP_NAME\" --node-args=\"-r dotenv/config\"",
+    "start:prod": "APP_NAME=${APP_NAME:-markku-api} sh -c 'if [ -f dist/main.js ]; then entry=dist/main.js; elif [ -f main.js ]; then entry=main.js; elif [ -f src/main.js ]; then entry=src/main.js; else echo Could not find server entry file in dist/main.js, main.js, or src/main.js >&2; exit 1; fi; pm2 start \"$entry\" --name \"$APP_NAME\" --node-args=\"-r dotenv/config\"'",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
